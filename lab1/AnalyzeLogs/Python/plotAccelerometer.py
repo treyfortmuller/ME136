@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # The file name from which we get the data. You must, obviously, update this to 
 # whatever your lof file of interest is called.
-fname = 'my_log_file.csv'
+fname = 'log.csv'
 
 #now we load the CSV file
 data = np.genfromtxt(fname, delimiter=',', skip_header=1)
