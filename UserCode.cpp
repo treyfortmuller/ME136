@@ -35,10 +35,14 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   }
   rateGyro_corr = in.imuMeasurement.rateGyro - estGyroBias;
 
-  // ***Attitude Estimators***
-  // roll -> x
-  // pitch -> y
-  // yaw -> z
+  // time constant for controllers on each axis
+  float const timeConstant_rollRate = 0.04f; // [s]
+  float const timeConstant_pitchRate = timeConstant_rollRate;
+  float const timeConstant_yawRate = 0.5f; // [s]
+
+  float const timeConstant_rollAngle = 0.04f; // [s]
+  float const timeConstant_pitchAngle = timeConstant_rollAngle;
+  float const timeConstant_yawAngle = 1.0f; // [s]
 
   //  ***Gyro only attitude estimator***
   //  estRoll = estRoll + dt*rateGyro_corr.x;
@@ -50,6 +54,24 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estPitch = (1.0f-p)*(estPitch + dt*rateGyro_corr.x) + p*(in.imuMeasurement.accelerometer.x / -gravity);
   estYaw = estYaw + dt*rateGyro_corr.z;
 
+  Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
+
+  // ***Rate Controller***
+  Vec3f cmdAngAcc = Vec3f(0,0,0);
+  Vec3f desAngVel = Vec3f(0,0,0);
+
+  cmdAngAcc.x = (-1/timeConstant_pitchRate)*(rateGyro_corr.x - desAngVel.x);
+  cmdAngAcc.y = (-1/timeConstant_rollRate)*(rateGyro_corr.y - desAngVel.y);
+  cmdAngAcc.z = (-1/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
+
+  // **Angle Controller
+  Vec3f desAng = Vec3f(0,0,0);
+  Vec3f cmdAngVel = Vec3f(0,0,0);
+
+  cmdAngVel.x = (-1/timeConstant_pitchRate)*(estAngle.x - desAng.x);
+  cmdAngVel.y = (-1/timeConstant_rollRate)*(estAngle.y - desAng.y);
+  cmdAngVel.z = (-1/timeConstant_yawRate)*(estAngle.z - desAng.z);
+
   // The function input (named "in") is a struct of type
   // "MainLoopInput". You can understand what values it
   // contains by going to its definition (click on "MainLoopInput",
@@ -59,10 +81,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   //Define the output numbers (in the struct outVals):
   MainLoopOutput outVals;
-//  motorCommand1 -> located at body +x +y
-//  motorCommand2 -> located at body +x -y
-//  motorCommand3 -> located at body -x -y
-//  motorCommand4 -> located at body -x +y
+  // motorCommand1 -> located at body +x +y
+  // motorCommand2 -> located at body +x -y
+  // motorCommand3 -> located at body -x -y
+  // motorCommand4 -> located at body -x +y
   outVals.motorCommand1 = 0;
   outVals.motorCommand2 = 0;
   outVals.motorCommand3 = 0;
@@ -74,9 +96,13 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[0] = estRoll;
   outVals.telemetryOutputs_plusMinus100[1] = estPitch;
   outVals.telemetryOutputs_plusMinus100[2] = estYaw;
-  outVals.telemetryOutputs_plusMinus100[3] = rateGyro_corr.x;
-  outVals.telemetryOutputs_plusMinus100[4] = rateGyro_corr.y;
-  outVals.telemetryOutputs_plusMinus100[5] = rateGyro_corr.z;
+  outVals.telemetryOutputs_plusMinus100[3] = cmdAngAcc.x;
+  outVals.telemetryOutputs_plusMinus100[4] = cmdAngAcc.y;
+  outVals.telemetryOutputs_plusMinus100[5] = cmdAngAcc.z;
+  outVals.telemetryOutputs_plusMinus100[6] = cmdAngVel.x;
+  outVals.telemetryOutputs_plusMinus100[7] = cmdAngVel.y;
+  outVals.telemetryOutputs_plusMinus100[8] = cmdAngVel.z;
+
   return outVals;
 
 }
@@ -128,19 +154,19 @@ void PrintStatus() {
          double(estYaw));
   printf("\n");
 
-//  printf("Example variable values:\n");
-//  printf("  exampleVariable_int = %d\n", exampleVariable_int);
-//  //Note that it is somewhat annoying to print float variables.
-//  //  We need to cast the variable as double, and we need to specify
-//  //  the number of digits we want (if you used simply "%f", it would
-//  //  truncate to an integer.
-//  //  Here, we print 6 digits, with three digits after the period.
-//  printf("  exampleVariable_float = %6.3f\n", double(exampleVariable_float));
-//
-//  //We print the Vec3f by printing it's three components independently:
-//  printf("  exampleVariable_Vec3f = (%6.3f, %6.3f, %6.3f)\n",
-//         double(exampleVariable_Vec3f.x), double(exampleVariable_Vec3f.y),
-//         double(exampleVariable_Vec3f.z));
+  //  printf("Example variable values:\n");
+  //  printf("  exampleVariable_int = %d\n", exampleVariable_int);
+  //  //Note that it is somewhat annoying to print float variables.
+  //  //  We need to cast the variable as double, and we need to specify
+  //  //  the number of digits we want (if you used simply "%f", it would
+  //  //  truncate to an integer.
+  //  //  Here, we print 6 digits, with three digits after the period.
+  //  printf("  exampleVariable_float = %6.3f\n", double(exampleVariable_float));
+  //
+  //  //We print the Vec3f by printing it's three components independently:
+  //  printf("  exampleVariable_Vec3f = (%6.3f, %6.3f, %6.3f)\n",
+  //         double(exampleVariable_Vec3f.x), double(exampleVariable_Vec3f.y),
+  //         double(exampleVariable_Vec3f.z));
 
   //just an example of how we would inspect the last main loop inputs and outputs:
   printf("Last main loop inputs:\n");
