@@ -50,6 +50,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //  estYaw = estYaw + dt*rateGyro_corr.z;
 
   // ***Gyro + accelerometer attitude estimator***
+  // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
   estRoll = (1.0f-p)*(estRoll + dt*rateGyro_corr.y) + p*(in.imuMeasurement.accelerometer.y / gravity);
   estPitch = (1.0f-p)*(estPitch + dt*rateGyro_corr.x) + p*(in.imuMeasurement.accelerometer.x / -gravity);
   estYaw = estYaw + dt*rateGyro_corr.z;
