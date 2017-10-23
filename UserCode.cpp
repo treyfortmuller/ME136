@@ -26,52 +26,83 @@ Vec3f rateGyro_corr = Vec3f(0,0,0);
 float estRoll = 0;
 float estPitch = 0;
 float estYaw = 0;
-float p = 0.01f; //rho, the gyro/accel trade-off scalar
+float p = 0.01f; //rho, the gyro/accel trade-off scalar default value: .01
+
+// controller variable initialization
+Vec3f cmdAngAcc = Vec3f(0,0,0);
+Vec3f desAngVel = Vec3f(0,0,0);
+
+Vec3f desAng = Vec3f(0,0,0);
+Vec3f cmdAngVel = Vec3f(0,0,0);
+
+// propeller distance:
+float l = 33e-3f;
+
+// propeller coefficient
+float k = 0.01f;
+
+//desired normalized total thrust:
+float norm_tot_thrust = 8.0f;
+
+// desired force
+float des_total_force = mass * norm_tot_thrust;
+
+// time constant for controllers on each axis
+// D gains on each axis
+float const timeConstant_rollRate = 0.04f; // [s]
+float const timeConstant_pitchRate = timeConstant_rollRate;
+float const timeConstant_yawRate = 0.5f; // [s]
+
+// P gains on each axis
+float const timeConstant_rollAngle = 0.4f; // [s]
+float const timeConstant_pitchAngle = timeConstant_rollAngle;
+float const timeConstant_yawAngle = 1.0f; // [s]
 
 MainLoopOutput MainLoop(MainLoopInput const &in) {
-  //Gyro
+  // gyro calibration
   if(in.currentTime < 1.0f){
     estGyroBias = estGyroBias + (in.imuMeasurement.rateGyro / 500.0f);
   }
   rateGyro_corr = in.imuMeasurement.rateGyro - estGyroBias;
 
-  // time constant for controllers on each axis
-  float const timeConstant_rollRate = 0.04f; // [s]
-  float const timeConstant_pitchRate = timeConstant_rollRate;
-  float const timeConstant_yawRate = 0.5f; // [s]
-
-  float const timeConstant_rollAngle = 0.04f; // [s]
-  float const timeConstant_pitchAngle = timeConstant_rollAngle;
-  float const timeConstant_yawAngle = 1.0f; // [s]
-
   //  ***Gyro only attitude estimator***
-  //  estRoll = estRoll + dt*rateGyro_corr.x;
-  //  estPitch = estPitch + dt*rateGyro_corr.y;
-  //  estYaw = estYaw + dt*rateGyro_corr.z;
+  //estRoll = estRoll + dt*rateGyro_corr.x;
+  //estPitch = estPitch + dt*rateGyro_corr.y;
+  //estYaw = estYaw + dt*rateGyro_corr.z;
 
   // ***Gyro + accelerometer attitude estimator***
   // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
-  estRoll = (1.0f-p)*(estRoll + dt*rateGyro_corr.y) + p*(in.imuMeasurement.accelerometer.y / gravity);
-  estPitch = (1.0f-p)*(estPitch + dt*rateGyro_corr.x) + p*(in.imuMeasurement.accelerometer.x / -gravity);
+  estRoll = (1.0f-p)*(estRoll + dt*rateGyro_corr.x) + p*(in.imuMeasurement.accelerometer.y / gravity);
+  estPitch = (1.0f-p)*(estPitch + dt*rateGyro_corr.y) + p*(in.imuMeasurement.accelerometer.x / -gravity);
   estYaw = estYaw + dt*rateGyro_corr.z;
 
   Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
 
-  // ***Rate Controller***
-  Vec3f cmdAngAcc = Vec3f(0,0,0);
-  Vec3f desAngVel = Vec3f(0,0,0);
+  // ***Angle Controller***
+  cmdAngVel.x = (-1/timeConstant_rollRate)*(estAngle.x - desAng.x);
+  cmdAngVel.y = (-1/timeConstant_pitchRate)*(estAngle.y - desAng.y);
+  cmdAngVel.z = (-1/timeConstant_yawRate)*(estAngle.z - desAng.z);
 
-  cmdAngAcc.x = (-1/timeConstant_pitchRate)*(rateGyro_corr.x - desAngVel.x);
-  cmdAngAcc.y = (-1/timeConstant_rollRate)*(rateGyro_corr.y - desAngVel.y);
+  desAngVel.x = cmdAngVel.x;
+  desAngVel.y = cmdAngVel.y;
+  desAngVel.z = cmdAngVel.z;
+
+  // ***Rate Controller***
+  cmdAngAcc.x = (-1/timeConstant_rollRate)*(rateGyro_corr.x - desAngVel.x);
+  cmdAngAcc.y = (-1/timeConstant_pitchRate)*(rateGyro_corr.y - desAngVel.y);
   cmdAngAcc.z = (-1/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
 
-  // **Angle Controller
-  Vec3f desAng = Vec3f(0,0,0);
-  Vec3f cmdAngVel = Vec3f(0,0,0);
+  // desired torques:
+  float n1 = cmdAngAcc.x*inertia_xx;
+  float n2 = cmdAngAcc.y*inertia_yy;
+  float n3 = cmdAngAcc.z*inertia_zz;
 
-  cmdAngVel.x = (-1/timeConstant_pitchRate)*(estAngle.x - desAng.x);
-  cmdAngVel.y = (-1/timeConstant_rollRate)*(estAngle.y - desAng.y);
-  cmdAngVel.z = (-1/timeConstant_yawRate)*(estAngle.z - desAng.z);
+  // MIXER
+  // convert desired torque + total force to four motor forces
+  float cp1 = (0.25f)*( (1*des_total_force) + ((1/l)*n1) + ((-1/l)*n2) + ((1/k)*n3) );
+  float cp2 = (0.25f)*( (1*des_total_force) + ((-1/l)*n1) + ((-1/l)*n2) + ((-1/k)*n3) );
+  float cp3 = (0.25f)*( (1*des_total_force) + ((-1/l)*n1) + ((1/l)*n2) + ((1/k)*n3) );
+  float cp4 = (0.25f)*( (1*des_total_force) + ((1/l)*n1) + ((1/l)*n2) + ((-1/k)*n3) );
 
   // The function input (named "in") is a struct of type
   // "MainLoopInput". You can understand what values it
@@ -86,10 +117,25 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   // motorCommand2 -> located at body +x -y
   // motorCommand3 -> located at body -x -y
   // motorCommand4 -> located at body -x +y
-  outVals.motorCommand1 = 0;
-  outVals.motorCommand2 = 0;
-  outVals.motorCommand3 = 0;
-  outVals.motorCommand4 = 0;
+
+  // default behavior
+  //  outVals.motorCommand1 = 0;
+  //  outVals.motorCommand2 = 0;
+  //  outVals.motorCommand3 = 0;
+  //  outVals.motorCommand4 = 0;
+
+  // run the controller
+  if(in.joystickInput.buttonRed) {
+    outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
+    outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
+    outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
+    outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
+  } else {
+    outVals.motorCommand1 = 0;
+    outVals.motorCommand2 = 0;
+    outVals.motorCommand3 = 0;
+    outVals.motorCommand4 = 0;
+  }
 
   //copy the inputs and outputs:
   lastMainLoopInputs = in;
