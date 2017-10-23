@@ -88,9 +88,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   desAngVel.z = cmdAngVel.z;
 
   // ***Rate Controller***
-  cmdAngAcc.x = (-1/timeConstant_rollRate)*(rateGyro_corr.x - desAngVel.x);
-  cmdAngAcc.y = (-1/timeConstant_pitchRate)*(rateGyro_corr.y - desAngVel.y);
-  cmdAngAcc.z = (-1/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
+  cmdAngAcc.x = (-1/timeConstant_rollAngle)*(rateGyro_corr.x - desAngVel.x);
+  cmdAngAcc.y = (-1/timeConstant_pitchAngle)*(rateGyro_corr.y - desAngVel.y);
+  cmdAngAcc.z = (-1/timeConstant_yawAngle)*(rateGyro_corr.z - desAngVel.z);
 
   // desired torques:
   float n1 = cmdAngAcc.x*inertia_xx;
@@ -99,10 +99,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // MIXER
   // convert desired torque + total force to four motor forces
-  float cp1 = (0.25f)*( (1*des_total_force) + ((1/l)*n1) + ((-1/l)*n2) + ((1/k)*n3) );
-  float cp2 = (0.25f)*( (1*des_total_force) + ((-1/l)*n1) + ((-1/l)*n2) + ((-1/k)*n3) );
-  float cp3 = (0.25f)*( (1*des_total_force) + ((-1/l)*n1) + ((1/l)*n2) + ((1/k)*n3) );
-  float cp4 = (0.25f)*( (1*des_total_force) + ((1/l)*n1) + ((1/l)*n2) + ((-1/k)*n3) );
+  float cp1 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((-1.0f/l)*n2) + ((1.0f/k)*n3) );
+  float cp2 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((-1.0f/l)*n2) + ((-1.0f/k)*n3) );
+  float cp3 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((1.0f/l)*n2) + ((1.0f/k)*n3) );
+  float cp4 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((1.0f/l)*n2) + ((-1.0f/k)*n3) );
 
   // The function input (named "in") is a struct of type
   // "MainLoopInput". You can understand what values it
