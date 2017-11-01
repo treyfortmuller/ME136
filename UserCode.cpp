@@ -112,6 +112,33 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
   }
 
+  // horizontal state estimator
+  // prediction
+  // (just assume velocity is constant):
+  estVelocity_1 = estVelocity_1 + 0 * dt;
+  estVelocity_2 = estVelocity_2 + 0 * dt;
+
+  // correction step, directly after the prediction step:
+  float const mixHorizVel = 0.1f;
+  if (in.opticalFlowSensor.updated) {
+    float sigma_1 = -in.opticalFlowSensor.value_x;
+    float sigma_2 = -in.opticalFlowSensor.value_y;
+
+    float div = (cosf(estRoll) * cosf(estPitch));
+
+    if (div > 0.5f) {
+      float deltaPredict = estHeight / div; //this is the delta in the eqution
+
+      float v1Meas = (-sigma_1 + in.imuMeasurement.rateGyro.y) * deltaPredict;
+      float v2Meas = (-sigma_2 - in.imuMeasurement.rateGyro.x) * deltaPredict;
+
+      estVelocity_1 = (1 - mixHorizVel) * estVelocity_1 + mixHorizVel * v1Meas;
+      estVelocity_2 = (1 - mixHorizVel) * estVelocity_2 + mixHorizVel * v2Meas;
+
+    }
+  }
+
+
 
   Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
 
