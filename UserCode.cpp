@@ -32,7 +32,6 @@ float p = 0.01f; //rho, the gyro/accel trade-off scalar default value: .01
 Vec3f cmdAngAcc = Vec3f(0,0,0);
 Vec3f desAngVel = Vec3f(0,0,0);
 
-Vec3f desAng = Vec3f(0,0,0);
 Vec3f cmdAngVel = Vec3f(0,0,0);
 
 // propeller distance:
@@ -57,6 +56,9 @@ float const timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 float const timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
 float const timeConstant_pitchAngle = timeConstant_rollAngle;
 float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+
+// time constant for horizontal controller:
+const float timeConst_horizVel = 2.0f;
 
 float estHeight = 0;
 float estVelocity_1 = 0;
@@ -112,7 +114,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
   }
 
-  // horizontal state estimator
+  // horizontal state estimator:
   // prediction
   // (just assume velocity is constant):
   estVelocity_1 = estVelocity_1 + 0 * dt;
@@ -138,14 +140,19 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
   }
 
+  float desAcc1 = -(1 / timeConst_horizVel) * estVelocity_1;
+  float desAcc2 = -(1 / timeConst_horizVel) * estVelocity_2;
 
+  float desRoll = -desAcc2/ gravity;
+  float desPitch = -desAcc1/ gravity;
+  float desYaw = 0;
 
   Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
 
   // ***Angle Controller***
-  cmdAngVel.x = (-1/timeConstant_rollRate)*(estAngle.x - desAng.x);
-  cmdAngVel.y = (-1/timeConstant_pitchRate)*(estAngle.y - desAng.y);
-  cmdAngVel.z = (-1/timeConstant_yawRate)*(estAngle.z - desAng.z);
+  cmdAngVel.x = (-1/timeConstant_rollRate)*(estAngle.x - desRoll);
+  cmdAngVel.y = (-1/timeConstant_pitchRate)*(estAngle.y - desPitch);
+  cmdAngVel.z = (-1/timeConstant_yawRate)*(estAngle.z - desYaw);
 
   desAngVel.x = cmdAngVel.x;
   desAngVel.y = cmdAngVel.y;
@@ -219,6 +226,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[4] = estVelocity_2;
   outVals.telemetryOutputs_plusMinus100[5] = estVelocity_3;
   outVals.telemetryOutputs_plusMinus100[6] = estHeight;
+  outVals.telemetryOutputs_plusMinus100[7] = desRoll;
+  outVals.telemetryOutputs_plusMinus100[8] = desPitch;
   return outVals;
 
 }
