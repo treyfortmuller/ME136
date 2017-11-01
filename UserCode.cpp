@@ -130,26 +130,37 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
     outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
     outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
-  } else {
+  } 
+  else {
+    desAng.y = 0;
     outVals.motorCommand1 = 0;
     outVals.motorCommand2 = 0;
     outVals.motorCommand3 = 0;
     outVals.motorCommand4 = 0;
   }
-
+  
+  // 4.4.1:
+  if (in.joystickInput.buttonBlue) {
+    desAng.y = 0.5236f;
+  }
+  else {
+    desAng.y = 0;
+  }
+  
+  
   //copy the inputs and outputs:
   lastMainLoopInputs = in;
   lastMainLoopOutputs = outVals;
-  outVals.telemetryOutputs_plusMinus100[0] = estRoll;
-  outVals.telemetryOutputs_plusMinus100[1] = estPitch;
-  outVals.telemetryOutputs_plusMinus100[2] = estYaw;
-  outVals.telemetryOutputs_plusMinus100[3] = cmdAngAcc.x;
-  outVals.telemetryOutputs_plusMinus100[4] = cmdAngAcc.y;
-  outVals.telemetryOutputs_plusMinus100[5] = cmdAngAcc.z;
+  outVals.telemetryOutputs_plusMinus100[0] = estAngle.x;
+  outVals.telemetryOutputs_plusMinus100[1] = estAngle.y;
+  outVals.telemetryOutputs_plusMinus100[2] = estAngle.z;
+  outVals.telemetryOutputs_plusMinus100[3] = rateGyro_corr.x;
+  outVals.telemetryOutputs_plusMinus100[4] = rateGyro_corr.y;
+  outVals.telemetryOutputs_plusMinus100[5] = rateGyro_corr.z;
   outVals.telemetryOutputs_plusMinus100[6] = cmdAngVel.x;
   outVals.telemetryOutputs_plusMinus100[7] = cmdAngVel.y;
   outVals.telemetryOutputs_plusMinus100[8] = cmdAngVel.z;
-
+  outVals.telemetryOutputs_plusMinus100[9] = desAng.y;
   return outVals;
 
 }
