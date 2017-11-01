@@ -51,12 +51,12 @@ float des_total_force = mass * norm_tot_thrust;
 // D gains on each axis
 float const timeConstant_rollRate = 0.04f; // [s]
 float const timeConstant_pitchRate = timeConstant_rollRate;
-float const timeConstant_yawRate = 0.5f; // [s]
+float const timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
 // P gains on each axis
-float const timeConstant_rollAngle = 0.4f; // [s]
+float const timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
 float const timeConstant_pitchAngle = timeConstant_rollAngle;
-float const timeConstant_yawAngle = 1.0f; // [s]
+float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
 MainLoopOutput MainLoop(MainLoopInput const &in) {
   // gyro calibration
@@ -149,16 +149,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //copy the inputs and outputs:
   lastMainLoopInputs = in;
   lastMainLoopOutputs = outVals;
-  outVals.telemetryOutputs_plusMinus100[0] = estAngle.x;
-  outVals.telemetryOutputs_plusMinus100[1] = estAngle.y;
-  outVals.telemetryOutputs_plusMinus100[2] = estAngle.z;
-  outVals.telemetryOutputs_plusMinus100[3] = rateGyro_corr.x;
-  outVals.telemetryOutputs_plusMinus100[4] = rateGyro_corr.y;
-  outVals.telemetryOutputs_plusMinus100[5] = rateGyro_corr.z;
-  outVals.telemetryOutputs_plusMinus100[6] = cmdAngVel.x;
-  outVals.telemetryOutputs_plusMinus100[7] = cmdAngVel.y;
-  outVals.telemetryOutputs_plusMinus100[8] = cmdAngVel.z;
-  outVals.telemetryOutputs_plusMinus100[9] = desAng.y;
+  outVals.telemetryOutputs_plusMinus100[0] = estRoll;
+  outVals.telemetryOutputs_plusMinus100[1] = estPitch;
+  outVals.telemetryOutputs_plusMinus100[2] = estYaw;
   return outVals;
 
 }
@@ -198,7 +191,7 @@ void PrintStatus() {
   printf("\n");  //new line
   printf("Raw gyro: ");
   printf("x=%6.3f, ", double(lastMainLoopInputs.imuMeasurement.rateGyro.x));
-  printf("y=%6.3f, ", double(lastMainLoopInputs.imuMeasurement.rateGyro.y));
+  prcintf("y=%6.3f, ", double(lastMainLoopInputs.imuMeasurement.rateGyro.y));
   printf("z=%6.3f, ", double(lastMainLoopInputs.imuMeasurement.rateGyro.z));
   printf("\n");  //new line
   printf("Attitude: ");
@@ -208,7 +201,16 @@ void PrintStatus() {
          double(estPitch));
   printf("estYaw=%6.3f, ",
          double(estYaw));
+
+  //  Start Code Block 5.1.1:
   printf("\n");
+  printf("Last range = %6.3f, ", \
+         double(lastMainLoopInputs.heightSensor.value));
+  printf("Last flow: x=%6.3f,  y=%6.3f\n", \
+         double(lastMainLoopInputs.opticalFlowSensor.value_x), \
+         double(lastMainLoopInputs.opticalFlowSensor.value_y));
+  printf("\n");
+  //  End Code Block 5.1.1:
 
   //  printf("Example variable values:\n");
   //  printf("  exampleVariable_int = %d\n", exampleVariable_int);
@@ -222,7 +224,7 @@ void PrintStatus() {
   //  //We print the Vec3f by printing it's three components independently:
   //  printf("  exampleVariable_Vec3f = (%6.3f, %6.3f, %6.3f)\n",
   //         double(exampleVariable_Vec3f.x), double(exampleVariable_Vec3f.y),
-  //         double(exampleVariable_Vec3f.z));
+  //         double(exampleVariable_Vec3f.z));cc
 
   //just an example of how we would inspect the last main loop inputs and outputs:
   printf("Last main loop inputs:\n");
