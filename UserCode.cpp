@@ -58,6 +58,18 @@ float const timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
 float const timeConstant_pitchAngle = timeConstant_rollAngle;
 float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
+float estHeight = 0;
+float estVelocity_1 = 0;
+float estVelocity_2 = 0;
+float estVelocity_3 = 0;
+
+// store last height measurement
+float lastHeightMeas_meas = 0;
+float lastHeightMeas_time = 0;
+
+
+
+
 MainLoopOutput MainLoop(MainLoopInput const &in) {
   // gyro calibration
   if(in.currentTime < 1.0f){
@@ -75,6 +87,31 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estRoll = (1.0f-p)*(estRoll + dt*rateGyro_corr.x) + p*(in.imuMeasurement.accelerometer.y / gravity);
   estPitch = (1.0f-p)*(estPitch + dt*rateGyro_corr.y) + p*(in.imuMeasurement.accelerometer.x / -gravity);
   estYaw = estYaw + dt*rateGyro_corr.z;
+
+
+  // height estimator:
+  // prediction step:
+  estHeight = estHeight + estVelocity_3 * dt;
+  estVelocity_3 = estVelocity_3 + 0 * dt; //assume constant(!)
+
+  // correction step, directly after the prediction step:
+  float const mixHeight = 0.3f;
+  if (in.heightSensor.updated) {
+    // check that the measurement is reasonable
+    if (in.heightSensor.value < 5.0f) {
+      float hMeas = in.heightSensor.value * cosf(estRoll) * cosf(estPitch);
+      estHeight = (1 - mixHeight) * estHeight + mixHeight * hMeas;
+
+      float v3Meas = (hMeas - lastHeightMeas_meas)
+          / (in.currentTime - lastHeightMeas_time);
+
+      estVelocity_3 = (1- mixHeight) * estVelocity_3 + mixHeight * v3Meas;
+      // store this measurement for the next velocity update
+      lastHeightMeas_meas = hMeas;
+      lastHeightMeas_time = in.currentTime;
+    }
+  }
+
 
   Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
 
@@ -145,13 +182,16 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 //  else {
 //    desAng.y = 0;
 //  }
-  
   //copy the inputs and outputs:
   lastMainLoopInputs = in;
   lastMainLoopOutputs = outVals;
   outVals.telemetryOutputs_plusMinus100[0] = estRoll;
   outVals.telemetryOutputs_plusMinus100[1] = estPitch;
   outVals.telemetryOutputs_plusMinus100[2] = estYaw;
+  outVals.telemetryOutputs_plusMinus100[3] = estVelocity_1;
+  outVals.telemetryOutputs_plusMinus100[4] = estVelocity_2;
+  outVals.telemetryOutputs_plusMinus100[5] = estVelocity_3;
+  outVals.telemetryOutputs_plusMinus100[6] = estHeight;
   return outVals;
 
 }
@@ -191,7 +231,7 @@ void PrintStatus() {
   printf("\n");  //new line
   printf("Raw gyro: ");
   printf("x=%6.3f, ", double(lastMainLoopInputs.imuMeasurement.rateGyro.x));
-  prcintf("y=%6.3f, ", double(lastMainLoopInputs.imuMeasurement.rateGyro.y));
+  printf("y=%6.3f, ", double(lastMainLoopInputs.imuMeasurement.rateGyro.y));
   printf("z=%6.3f, ", double(lastMainLoopInputs.imuMeasurement.rateGyro.z));
   printf("\n");  //new line
   printf("Attitude: ");
