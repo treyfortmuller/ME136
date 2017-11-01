@@ -40,11 +40,6 @@ float l = 33e-3f;
 // propeller coefficient
 float k = 0.01f;
 
-//desired normalized total thrust:
-float norm_tot_thrust = 8.0f;
-
-// desired force
-float des_total_force = mass * norm_tot_thrust;
 
 // time constant for controllers on each axis
 // D gains on each axis
@@ -59,6 +54,10 @@ float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
 // time constant for horizontal controller:
 const float timeConst_horizVel = 2.0f;
+
+// time constants for the attitude control
+const float natFreq_height = 2.0f;
+const float dampingRatio_height = 0.7f;
 
 float estHeight = 0;
 float estVelocity_1 = 0;
@@ -149,6 +148,20 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
 
+  // Vertical Controller
+  const float desHeight = 0.5f;
+  const float desAcc3 = -2 * dampingRatio_height * natFreq_height
+      * estVelocity_3
+      - natFreq_height * natFreq_height * (estHeight - desHeight);
+
+  //desired normalized total thrust:
+  float desNormalizedAcceleration = (gravity
+      + desAcc3) / (cosf(estRoll) * cosf(estPitch));
+
+  // desired force
+  float des_total_force = mass * desNormalizedAcceleration;
+
+
   // ***Angle Controller***
   cmdAngVel.x = (-1/timeConstant_rollRate)*(estAngle.x - desRoll);
   cmdAngVel.y = (-1/timeConstant_pitchRate)*(estAngle.y - desPitch);
@@ -228,6 +241,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[6] = estHeight;
   outVals.telemetryOutputs_plusMinus100[7] = desRoll;
   outVals.telemetryOutputs_plusMinus100[8] = desPitch;
+  outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
   return outVals;
 
 }
