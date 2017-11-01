@@ -132,7 +132,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
   } 
   else {
-    desAng.y = 0;
     outVals.motorCommand1 = 0;
     outVals.motorCommand2 = 0;
     outVals.motorCommand3 = 0;
