@@ -138,14 +138,13 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     outVals.motorCommand4 = 0;
   }
   
-  // 4.4.1:
-  if (in.joystickInput.buttonBlue) {
-    desAng.y = 0.5236f;
-  }
-  else {
-    desAng.y = 0;
-  }
-  
+//  // 4.4.1:
+//  if (in.joystickInput.buttonBlue) {
+//    desAng.y = 0.5236f;
+//  }
+//  else {
+//    desAng.y = 0;
+//  }
   
   //copy the inputs and outputs:
   lastMainLoopInputs = in;
