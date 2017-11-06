@@ -78,47 +78,29 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //  motorCommand2 -> located at body +x -y
   //  motorCommand3 -> located at body -x -y
   //  motorCommand4 -> located at body -x +y
-    if (in.joystickInput.buttonGreen == 1 && in.joystickInput.buttonBlue == 1){
-          outVals.motorCommand1 = 0;
-          outVals.motorCommand2 = 0;
-          outVals.motorCommand3 = 240;
-          outVals.motorCommand4 = 0;
-    }
-    else if (in.joystickInput.buttonGreen == 1){
-      outVals.motorCommand1 = 0;
-      outVals.motorCommand2 = 0;
-      outVals.motorCommand3 = 40;
-      outVals.motorCommand4 = 0;
+    if (in.joystickInput.buttonGreen == 1){
+      outVals.motorCommand1 = pwmCommandFromSpeed(1000);
+      outVals.motorCommand2 = pwmCommandFromSpeed(1000);
+      outVals.motorCommand3 = pwmCommandFromSpeed(1000);
+      outVals.motorCommand4 = pwmCommandFromSpeed(1000);
     }
     else if (in.joystickInput.buttonBlue == 1){
-        outVals.motorCommand1 = 0;
-        outVals.motorCommand2 = 0;
-        outVals.motorCommand3 = 80;
-        outVals.motorCommand4 = 0;
+        outVals.motorCommand1 = pwmCommandFromSpeed(1200);
+        outVals.motorCommand2 = pwmCommandFromSpeed(1200);
+        outVals.motorCommand3 = pwmCommandFromSpeed(1200);
+        outVals.motorCommand4 = pwmCommandFromSpeed(1200);
     }
     else if (in.joystickInput.buttonYellow == 1){
-        outVals.motorCommand1 = 0;
-        outVals.motorCommand2 = 0;
-        outVals.motorCommand3 = 120;
-        outVals.motorCommand4 = 0;
+        outVals.motorCommand1 = pwmCommandFromSpeed(1400);
+        outVals.motorCommand2 = pwmCommandFromSpeed(1400);
+        outVals.motorCommand3 = pwmCommandFromSpeed(1400);
+        outVals.motorCommand4 = pwmCommandFromSpeed(1400);
     }
-    else if (in.joystickInput.buttonStart == 1){
-        outVals.motorCommand1 = 0;
-        outVals.motorCommand2 = 0;
-        outVals.motorCommand3 = 160;
-        outVals.motorCommand4 = 0;
-    }
-    else if (in.joystickInput.buttonSelect == 1){
-        outVals.motorCommand1 = 0;
-        outVals.motorCommand2 = 0;
-        outVals.motorCommand3 = 200;
-        outVals.motorCommand4 = 0;
-    }
-    else {
-      outVals.motorCommand1 = 0;
-      outVals.motorCommand2 = 0;
-      outVals.motorCommand3 = 0;
-      outVals.motorCommand4 = 0;
+    else (in.joystickInput.buttonStart == 1){
+        outVals.motorCommand1 = pwmCommandFromSpeed(1600);
+        outVals.motorCommand2 = pwmCommandFromSpeed(1600);
+        outVals.motorCommand3 = pwmCommandFromSpeed(1600);
+        outVals.motorCommand4 = pwmCommandFromSpeed(1600);
     }
     //copy the inputs and outputs:
     lastMainLoopInputs = in;
