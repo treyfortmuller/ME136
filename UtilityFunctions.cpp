@@ -6,8 +6,8 @@ int pwmCommandFromSpeed(float desiredSpeed_rad_per_sec) {
   // number -- this ensures that we use single precision
   // floating point (rather than double precision, which
   // would be substantially slower on the microcontroller).
-  float b = 0.120601f;  // the first order term
-  float a = -57.57631f;  // the zeroth order term
+  float b = 0.11f;  // the first order term
+  float a = -49.7f;  // the zeroth order term
   // we need to error catch for slow speeds (ensure this values isn't negative)
 
   return int(a + b * desiredSpeed_rad_per_sec);
