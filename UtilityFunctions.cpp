@@ -6,6 +6,9 @@ int pwmCommandFromSpeed(float desiredSpeed_rad_per_sec) {
   // number -- this ensures that we use single precision
   // floating point (rather than double precision, which
   // would be substantially slower on the microcontroller).
+
+  // here we use updated data, retested for this relationship
+  // during lab 5...
   float b = 0.11f;  // the first order term
   float a = -49.7f;  // the zeroth order term
   // we need to error catch for slow speeds (ensure this values isn't negative)
@@ -17,7 +20,7 @@ float speedFromForce(float desiredForce_N) {
   // replace this with your determined constant:
   // Remember to add the trailing "f" for single
   // precision!
-  float const propConstant = 2.48e-08f;
+  float const propConstant = 1.8925e-08f;
 
   //we implement a safety check,
   //  (no sqrtf for negative numbers)
