@@ -147,14 +147,15 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   }
 
+  // Horizontal Controller
   float desAcc1 = -(1 / timeConst_horizVel) * estVelocity_1;
   float desAcc2 = -(1 / timeConst_horizVel) * estVelocity_2;
 
-  float desRoll = -desAcc2/ gravity;
-  float desPitch = -desAcc1/ gravity;
-  float desYaw = 0;
+  float desRollAng = -desAcc2/ gravity;
+  float desPitchAng = desAcc1/ gravity;
+  float desYawAng = 0;
 
-  Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
+
 
   // Vertical Controller
   const float desHeight = 0.5f;
@@ -171,18 +172,21 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
 
   // ***Angle Controller***
-  cmdAngVel.x = (-1/timeConstant_rollRate)*(estAngle.x - desRoll);
-  cmdAngVel.y = (-1/timeConstant_pitchRate)*(estAngle.y - desPitch);
-  cmdAngVel.z = (-1/timeConstant_yawRate)*(estAngle.z - desYaw);
+  Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
+
+  cmdAngVel.x = (-1/timeConstant_rollAngle)*(estAngle.x - desRollAng);
+  cmdAngVel.y = (-1/timeConstant_pitchAngle)*(estAngle.y - desPitchAng);
+  cmdAngVel.z = (-1/timeConstant_yawAngle)*(estAngle.z - desYawAng);
 
   desAngVel.x = cmdAngVel.x;
   desAngVel.y = cmdAngVel.y;
   desAngVel.z = cmdAngVel.z;
 
   // ***Rate Controller***
-  cmdAngAcc.x = (-1/timeConstant_rollAngle)*(rateGyro_corr.x - desAngVel.x);
-  cmdAngAcc.y = (-1/timeConstant_pitchAngle)*(rateGyro_corr.y - desAngVel.y);
-  cmdAngAcc.z = (-1/timeConstant_yawAngle)*(rateGyro_corr.z - desAngVel.z);
+  cmdAngAcc.x = (-1/timeConstant_rollRate)*(rateGyro_corr.x - desAngVel.x);
+  cmdAngAcc.y = (-1/timeConstant_pitchRate)*(rateGyro_corr.y - desAngVel.y);
+  cmdAngAcc.z = (-1/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
+
 
   // desired torques:
   float n1 = cmdAngAcc.x*inertia_xx;
@@ -198,18 +202,22 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
 
   // run the controller
-  if(in.joystickInput.buttonRed) {
+//  if(in.joystickInput.buttonRed) {
+//    outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
+//    outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
+//    outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
+//    outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
+//  }
+//  else {
+//    outVals.motorCommand1 = 0;
+//    outVals.motorCommand2 = 0;
+//    outVals.motorCommand3 = 0;
+//    outVals.motorCommand4 = 0;
+//  }
     outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
     outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
     outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
     outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
-  }
-  else {
-    outVals.motorCommand1 = 0;
-    outVals.motorCommand2 = 0;
-    outVals.motorCommand3 = 0;
-    outVals.motorCommand4 = 0;
-  }
 
   //  // 4.4.1:
   //  if (in.joystickInput.buttonBlue) {
@@ -229,8 +237,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[4] = estVelocity_2;
   outVals.telemetryOutputs_plusMinus100[5] = estVelocity_3;
   outVals.telemetryOutputs_plusMinus100[6] = estHeight;
-  outVals.telemetryOutputs_plusMinus100[7] = desRoll;
-  outVals.telemetryOutputs_plusMinus100[8] = desPitch;
+  outVals.telemetryOutputs_plusMinus100[7] = desRollAng;
+  outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
   outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
   return outVals;
 
