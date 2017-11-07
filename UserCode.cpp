@@ -118,7 +118,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
       lastHeightMeas_meas = hMeas;
       lastHeightMeas_time = in.currentTime;
     }
-<<<<<<< HEAD
   }
 
   // horizontal state estimator:
@@ -145,25 +144,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
       estVelocity_2 = (1 - mixHorizVel) * estVelocity_2 + mixHorizVel * v2Meas;
 
     }
-=======
-    else if (in.joystickInput.buttonStart == 1){
-        outVals.motorCommand1 = pwmCommandFromSpeed(1600);
-        outVals.motorCommand2 = pwmCommandFromSpeed(1600);
-        outVals.motorCommand3 = pwmCommandFromSpeed(1600);
-        outVals.motorCommand4 = pwmCommandFromSpeed(1600);
-    }
-    else {
-        outVals.motorCommand1 = 0;
-        outVals.motorCommand2 = 0;
-        outVals.motorCommand3 = 0;
-        outVals.motorCommand4 = 0;
-    }
-    //copy the inputs and outputs:
-    lastMainLoopInputs = in;
-    lastMainLoopOutputs = outVals;
-    return outVals;
 
->>>>>>> 96d455a2bf964d4c27e2834ec93a22c63204e92e
   }
 
   float desAcc1 = -(1 / timeConst_horizVel) * estVelocity_1;
@@ -215,25 +196,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   float cp3 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((1.0f/l)*n2) + ((1.0f/k)*n3) );
   float cp4 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((1.0f/l)*n2) + ((-1.0f/k)*n3) );
 
-  // The function input (named "in") is a struct of type
-  // "MainLoopInput". You can understand what values it
-  // contains by going to its definition (click on "MainLoopInput",
-  // and then hit <F3> -- this should take you to the definition).
-  // For example, "in.joystickInput.buttonBlue" is true if the
-  // joystick's blue button is pushed, false otherwise.
-
-  //Define the output numbers (in the struct outVals):
-  MainLoopOutput outVals;
-  // motorCommand1 -> located at body +x +y
-  // motorCommand2 -> located at body +x -y
-  // motorCommand3 -> located at body -x -y
-  // motorCommand4 -> located at body -x +y
-
-  // default behavior
-  //  outVals.motorCommand1 = 0;
-  //  outVals.motorCommand2 = 0;
-  //  outVals.motorCommand3 = 0;
-  //  outVals.motorCommand4 = 0;
 
   // run the controller
   if(in.joystickInput.buttonRed) {
@@ -249,13 +211,13 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     outVals.motorCommand4 = 0;
   }
 
-//  // 4.4.1:
-//  if (in.joystickInput.buttonBlue) {
-//    desAng.y = 0.5236f;
-//  }
-//  else {
-//    desAng.y = 0;
-//  }
+  //  // 4.4.1:
+  //  if (in.joystickInput.buttonBlue) {
+  //    desAng.y = 0.5236f;
+  //  }
+  //  else {
+  //    desAng.y = 0;
+  //  }
 
   //copy the inputs and outputs:
   lastMainLoopInputs = in;
