@@ -96,16 +96,23 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
         outVals.motorCommand3 = pwmCommandFromSpeed(1400);
         outVals.motorCommand4 = pwmCommandFromSpeed(1400);
     }
-    else (in.joystickInput.buttonStart == 1){
+    else if (in.joystickInput.buttonStart == 1){
         outVals.motorCommand1 = pwmCommandFromSpeed(1600);
         outVals.motorCommand2 = pwmCommandFromSpeed(1600);
         outVals.motorCommand3 = pwmCommandFromSpeed(1600);
         outVals.motorCommand4 = pwmCommandFromSpeed(1600);
     }
+    else {
+        outVals.motorCommand1 = 0;
+        outVals.motorCommand2 = 0;
+        outVals.motorCommand3 = 0;
+        outVals.motorCommand4 = 0;
+    }
     //copy the inputs and outputs:
     lastMainLoopInputs = in;
     lastMainLoopOutputs = outVals;
     return outVals;
+
   }
   
 //  // gyro calibration
