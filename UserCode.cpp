@@ -3,6 +3,7 @@
 #include "Vec3f.hpp"
 
 #include <stdio.h> //for printf
+#include <math.h> //for trig functions
 
 //An example of a variable that persists beyond the function call.
 float exampleVariable_float = 0.0f;  //Note the trailing 'f' in the number. This is to force single precision floating point.
@@ -68,6 +69,8 @@ float estVelocity_3 = 0;
 float lastHeightMeas_meas = 0;
 float lastHeightMeas_time = 0;
 
+//initialize angular velocity variable
+Vec3f AngVel = Vec3f(0,0,0);
 
 
 ////lab 5 code
@@ -90,11 +93,15 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //estPitch = estPitch + dt*rateGyro_corr.y;
   //estYaw = estYaw + dt*rateGyro_corr.z;
 
+  AngVel.x = rateGyro_corr.x + rateGyro_corr.y*(sinf(estRoll)*tanf(estPitch)) + rateGyro_corr.z*(cosf(estRoll)*tanf(estPitch));
+  AngVel.y = rateGyro_corr.y*cosf(estRoll) - rateGyro_corr.z*sinf(estRoll);
+  AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));
+
   // ***Gyro + accelerometer attitude estimator***
   // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
-  estRoll = (1.0f-p)*(estRoll + dt*rateGyro_corr.x) + p*(in.imuMeasurement.accelerometer.y / gravity);
-  estPitch = (1.0f-p)*(estPitch + dt*rateGyro_corr.y) + p*(in.imuMeasurement.accelerometer.x / -gravity);
-  estYaw = estYaw + dt*rateGyro_corr.z;
+  estRoll = (1.0f-p)*(estRoll + dt*AngVel.x) + p*(arcsinf( in.imuMeasurement.accelerometer.y / (gravity*cosf(estPitch))));
+  estPitch = (1.0f-p)*(estPitch + dt*AngVel.y) + p*(arcsinf( in.imuMeasurement.accelerometer.x / -gravity));
+  estYaw = estYaw + dt*AngVel.z;
 
 
   // height estimator:
