@@ -53,7 +53,7 @@ float const timeConstant_pitchAngle = timeConstant_rollAngle;
 float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
 // time constant for horizontal controller:
-const float timeConst_horizVel = 2.0f;
+const float timeConst_horizVel = 1.0f; //2.0
 
 // time constants for the attitude control
 const float natFreq_height = 2.0f;
@@ -63,6 +63,10 @@ float estHeight = 0;
 float estVelocity_1 = 0;
 float estVelocity_2 = 0;
 float estVelocity_3 = 0;
+
+// integrating optical flow to control around 0 horizontal position
+float estPos_1 = 0;
+float estPos_2 = 0;
 
 // store last height measurement
 float lastHeightMeas_meas = 0;
@@ -127,7 +131,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estVelocity_2 = estVelocity_2 + 0 * dt;
 
   // correction step, directly after the prediction step:
-  float const mixHorizVel = 0.1f;
+  float const mixHorizVel = 0.5f; //.1
   if (in.opticalFlowSensor.updated) {
     float sigma_1 = -in.opticalFlowSensor.value_x;
     float sigma_2 = -in.opticalFlowSensor.value_y;
@@ -147,7 +151,15 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   }
 
-  // Horizontal Controller
+  // Integrate optical flow for position estimation
+  float oldEstPos_1 = estPos_1;
+  float oldEstPos_2 = estPos_2;
+
+  estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
+  estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
+
+
+  // Horizontal Controller -- NEEDS UPDATING FOR CONTROL AROUND POS
   float desAcc1 = -(1 / timeConst_horizVel) * estVelocity_1;
   float desAcc2 = -(1 / timeConst_horizVel) * estVelocity_2;
 
