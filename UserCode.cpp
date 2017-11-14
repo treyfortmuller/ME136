@@ -35,6 +35,13 @@ Vec3f desAngVel = Vec3f(0,0,0);
 
 Vec3f cmdAngVel = Vec3f(0,0,0);
 
+
+// Quaternion Rotations:
+float q0 = 0;
+float q1 = 0;
+float q2 = 0;
+float q3 = 0;
+
 // propeller distance:
 float l = 33e-3f;
 
@@ -100,6 +107,22 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   AngVel.x = rateGyro_corr.x + rateGyro_corr.y*(sinf(estRoll)*tanf(estPitch)) + rateGyro_corr.z*(cosf(estRoll)*tanf(estPitch));
   AngVel.y = rateGyro_corr.y*cosf(estRoll) - rateGyro_corr.z*sinf(estRoll);
   AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));
+
+  // estRoll x:φ  , estPitch y:θ , estYaw z: ψ
+  // Quaternion rotations from attitude angle estimates
+  q0 = cosf(estRoll/2)*cosf(estPitch/2)*cosf(estYaw/2) + sinf(estRoll/2)*sinf(estPitch/2)*sinf(estYaw/2);
+  q1 = sinf(estRoll/2)*cosf(estPitch/2)*cosf(estYaw/2) − cosf(estRoll/2)*sinf(estPitch/2)*sinf(estYaw/2);
+  q2 = cosf(estRoll/2)*sinf(estPitch/2)*cosf(estYaw/2) + sinf(estRoll/2)*cosf(estPitch/2)*sinf(estYaw/2);
+  q3 = cosf(estRoll/2)*cosf(estPitch/2)*sinf(estYaw/2) − sinf(estRoll/2)*sinf(estPitch/2)*cosf(estYaw/2);
+
+
+
+  AngVel.x = rateGyro_corr.x + rateGyro_corr.y*(sinf(estRoll)*tanf(estPitch)) + rateGyro_corr.z*(cosf(estRoll)*tanf(estPitch));
+  AngVel.y = rateGyro_corr.y*cosf(estRoll) - rateGyro_corr.z*sinf(estRoll);
+  AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));  
+
+
+
 
   // ***Gyro + accelerometer attitude estimator***
   // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
