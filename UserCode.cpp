@@ -55,6 +55,7 @@ float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
 // time constant for horizontal controller:
 const float timeConst_horizVel = 1.0f; //2.0
+const float timeConst_horizPos = 4.0f;
 
 // time constants for the attitude control
 const float natFreq_height = 2.0f;
@@ -97,11 +98,16 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //estPitch = estPitch + dt*rateGyro_corr.y;
   //estYaw = estYaw + dt*rateGyro_corr.z;
 
+  // ***Gyro + accelerometer attitude estimator***
+  // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
+  //estRoll = (1.0f-p)*(estRoll + dt*rateGyro_corr.x) + p*(in.imuMeasurement.accelerometer.y / gravity);
+  //estPitch = (1.0f-p)*(estPitch + dt*rateGyro_corr.y) + p*(in.imuMeasurement.accelerometer.x / -gravity);
+  //estYaw = estYaw + dt*rateGyro_corr.z;
+
+  // ***Gyro + accelerometer attitude estimator + no small angle aprroximations***
   AngVel.x = rateGyro_corr.x + rateGyro_corr.y*(sinf(estRoll)*tanf(estPitch)) + rateGyro_corr.z*(cosf(estRoll)*tanf(estPitch));
   AngVel.y = rateGyro_corr.y*cosf(estRoll) - rateGyro_corr.z*sinf(estRoll);
   AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));
-
-  // ***Gyro + accelerometer attitude estimator***
   // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
   estRoll = (1.0f-p)*(estRoll + dt*AngVel.x) + p*(arcsinf( in.imuMeasurement.accelerometer.y / (gravity*cosf(estPitch))));
   estPitch = (1.0f-p)*(estPitch + dt*AngVel.y) + p*(arcsinf( in.imuMeasurement.accelerometer.x / -gravity));
@@ -159,6 +165,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   }
 
   // Integrate optical flow for position estimation
+  float desPos1 = 0;
+  float desPos2 = 0;
+
   float oldEstPos_1 = estPos_1;
   float oldEstPos_2 = estPos_2;
 
@@ -167,14 +176,17 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
 
   // Horizontal Controller -- NEEDS UPDATING FOR CONTROL AROUND POS
-  float desAcc1 = -(1 / timeConst_horizVel) * estVelocity_1;
-  float desAcc2 = -(1 / timeConst_horizVel) * estVelocity_2;
+  float desVel1 = -(1 / timeConst_horizPos) * (estPosition_1 - desPos1);
+  float desVel2 = -(1 / timeConst_horizPos) * (estPosition_2 - desPos2);
 
+
+  float desAcc1 = -(1 / timeConst_horizVel) * (estVelocity_1 - desVel1);
+  float desAcc2 = -(1 / timeConst_horizVel) * (estVelocity_2 - desVel2);
+
+  //control around velocity
   float desRollAng = -desAcc2/ gravity;
   float desPitchAng = desAcc1/ gravity;
   float desYawAng = 0;
-
-
 
   // Vertical Controller
   const float desHeight = 0.5f;
