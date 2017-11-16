@@ -54,12 +54,14 @@ float const timeConstant_pitchAngle = timeConstant_rollAngle;
 float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
 // time constant for horizontal controller:
+
 const float timeConst_horizVel = 1.0f; //2.0
 const float timeConst_horizPos = 4.0f;
 
+
 // time constants for the attitude control
-const float natFreq_height = 2.0f;
-const float dampingRatio_height = 0.7f;
+float const natFreq_height = 2.0f;
+float const dampingRatio_height = 0.7f;
 
 float estHeight = 0;
 float estVelocity_1 = 0;
@@ -109,10 +111,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   AngVel.y = rateGyro_corr.y*cosf(estRoll) - rateGyro_corr.z*sinf(estRoll);
   AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));
   // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
-  estRoll = (1.0f-p)*(estRoll + dt*AngVel.x) + p*(arcsinf( in.imuMeasurement.accelerometer.y / (gravity*cosf(estPitch))));
-  estPitch = (1.0f-p)*(estPitch + dt*AngVel.y) + p*(arcsinf( in.imuMeasurement.accelerometer.x / -gravity));
+  estRoll = (1.0f-p)*(estRoll + dt*AngVel.x) + p*(asinf( in.imuMeasurement.accelerometer.y / (gravity*cosf(estPitch))));
+  estPitch = (1.0f-p)*(estPitch + dt*AngVel.y) + p*(asinf( in.imuMeasurement.accelerometer.x / -gravity));
   estYaw = estYaw + dt*AngVel.z;
-
 
   // height estimator:
   // prediction step:
@@ -176,8 +177,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
 
   // Horizontal Controller -- NEEDS UPDATING FOR CONTROL AROUND POS
-  float desVel1 = -(1 / timeConst_horizPos) * (estPosition_1 - desPos1);
-  float desVel2 = -(1 / timeConst_horizPos) * (estPosition_2 - desPos2);
+  float desVel1 = -(1 / timeConst_horizPos) * (estPos_1 - desPos1);
+  float desVel2 = -(1 / timeConst_horizPos) * (estPos_2 - desPos2);
 
 
   float desAcc1 = -(1 / timeConst_horizVel) * (estVelocity_1 - desVel1);
@@ -187,6 +188,13 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   float desRollAng = -desAcc2/ gravity;
   float desPitchAng = desAcc1/ gravity;
   float desYawAng = 0;
+
+
+  // trying to eliminate small angle approx
+  //float desRollAng = - atanf(desAcc2/ gravity); // is this where the negative sign goes? how does it arise?
+  //float desPitchAng = atanf(desAcc1/ gravity);
+  //float desYawAng = 0;
+
 
   // Vertical Controller
   const float desHeight = 0.5f;
