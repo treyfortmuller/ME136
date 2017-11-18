@@ -56,8 +56,8 @@ float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 // time constant for horizontal controller:
 
 const float timeConst_horizVel = 1.0f; //2.0
-const float timeConst_horizPos = 4.0f;
-
+const float timeConst_horizPos_1 = 2.0f;
+const float timeConst_horizPos_2 = 2.0f;
 
 // time constants for the attitude control
 float const natFreq_height = 2.0f;
@@ -177,8 +177,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
 
   // Horizontal Controller -- NEEDS UPDATING FOR CONTROL AROUND POS
-  float desVel1 = -(1 / timeConst_horizPos) * (estPos_1 - desPos1);
-  float desVel2 = -(1 / timeConst_horizPos) * (estPos_2 - desPos2);
+  float desVel1 = -(1 / timeConst_horizPos_1) * (estPos_1 - desPos1);
+  float desVel2 = -(1 / timeConst_horizPos_2) * (estPos_2 - desPos2);
 
 
   float desAcc1 = -(1 / timeConst_horizVel) * (estVelocity_1 - desVel1);
