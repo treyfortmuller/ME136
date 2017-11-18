@@ -110,6 +110,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   AngVel.x = rateGyro_corr.x + rateGyro_corr.y*(sinf(estRoll)*tanf(estPitch)) + rateGyro_corr.z*(cosf(estRoll)*tanf(estPitch));
   AngVel.y = rateGyro_corr.y*cosf(estRoll) - rateGyro_corr.z*sinf(estRoll);
   AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));
+
   // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
   estRoll = (1.0f-p)*(estRoll + dt*AngVel.x) + p*(asinf( in.imuMeasurement.accelerometer.y / (gravity*cosf(estPitch))));
   estPitch = (1.0f-p)*(estPitch + dt*AngVel.y) + p*(asinf( in.imuMeasurement.accelerometer.x / -gravity));
@@ -141,7 +142,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   // horizontal state estimator:
   // prediction
   // (just assume velocity is constant):
-  estVelocity_1 = estVelocity_1 + 0 * dt;
+  estVelocity_1 = estVelocity_1 + 0 * dt; // need to fix estimated estVelocity to account for the acceleration
   estVelocity_2 = estVelocity_2 + 0 * dt;
 
   // correction step, directly after the prediction step:
@@ -176,10 +177,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
 
 
-  // Horizontal Controller -- NEEDS UPDATING FOR CONTROL AROUND POS
+  // Horizontal Controller
   float desVel1 = -(1 / timeConst_horizPos) * (estPos_1 - desPos1);
   float desVel2 = -(1 / timeConst_horizPos) * (estPos_2 - desPos2);
-
 
   float desAcc1 = -(1 / timeConst_horizVel) * (estVelocity_1 - desVel1);
   float desAcc2 = -(1 / timeConst_horizVel) * (estVelocity_2 - desVel2);
@@ -209,7 +209,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   // desired force
   float des_total_force = mass * desNormalizedAcceleration;
 
-
   // ***Angle Controller***
   Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
 
@@ -225,7 +224,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   cmdAngAcc.x = (-1/timeConstant_rollRate)*(rateGyro_corr.x - desAngVel.x);
   cmdAngAcc.y = (-1/timeConstant_pitchRate)*(rateGyro_corr.y - desAngVel.y);
   cmdAngAcc.z = (-1/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
-
 
   // desired torques:
   float n1 = cmdAngAcc.x*inertia_xx;
