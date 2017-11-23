@@ -68,6 +68,9 @@ float estVelocity_1 = 0;
 float estVelocity_2 = 0;
 float estVelocity_3 = 0;
 
+float oldEstVelocity_1 = 0;
+float oldEstVelocity_2 = 0;
+
 // integrating optical flow to control around 0 horizontal position
 float estPos_1 = 0;
 float estPos_2 = 0;
@@ -139,11 +142,15 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
   }
 
-  // horizontal state estimator:
+  // horizontal state estimate:
+
   // prediction
   // (just assume velocity is constant):
-  estVelocity_1 = estVelocity_1 + 0 * dt; // need to fix estimated estVelocity to account for the acceleration
-  estVelocity_2 = estVelocity_2 + 0 * dt;
+  //estVelocity_1 = estVelocity_1 + 0 * dt; // need to fix estimated estVelocity to account for the acceleration
+  //estVelocity_2 = estVelocity_2 + 0 * dt;
+
+  oldEstVelocity_1 = estVelocity_1;
+  oldEstVelocity_2 = estVelocity_2;
 
   // correction step, directly after the prediction step:
   float const mixHorizVel = 0.5f; //.1
@@ -165,6 +172,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
 
   }
+  // dont assume velocity is constant
+  estVelocity_1 = oldEstVelocity_1 + (estVelocity_1 - oldEstVelocity_1)/dt;
+  estVelocity_2 = oldEstVelocity_2 + (estVelocity_2 - oldEstVelocity_2)/dt;
+
 
   // Integrate optical flow for position estimation
   float desPos1 = 0;
@@ -176,12 +187,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
 
-
   // Horizontal Controller
-  float desVel1 = -(1 / timeConst_horizPos) * (estPos_1 - desPos1);
-  float desVel2 = -(1 / timeConst_horizPos) * (estPos_2 - desPos2);
-
-  // Horizontal Controller -- NEEDS UPDATING FOR CONTROL AROUND POS
   float desVel1 = -(1 / timeConst_horizPos_1) * (estPos_1 - desPos1);
   float desVel2 = -(1 / timeConst_horizPos_2) * (estPos_2 - desPos2);
 
@@ -193,12 +199,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   float desPitchAng = desAcc1/ gravity;
   float desYawAng = 0;
 
-
   // trying to eliminate small angle approx
   //float desRollAng = - atanf(desAcc2/ gravity); // is this where the negative sign goes? how does it arise?
   //float desPitchAng = atanf(desAcc1/ gravity);
   //float desYawAng = 0;
-
 
   // Vertical Controller
   const float desHeight = 0.5f;
@@ -243,18 +247,18 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
 
   // run the controller
-//  if(in.joystickInput.buttonRed) {
-//    outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
-//    outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
-//    outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
-//    outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
-//  }
-//  else {
-//    outVals.motorCommand1 = 0;
-//    outVals.motorCommand2 = 0;
-//    outVals.motorCommand3 = 0;
-//    outVals.motorCommand4 = 0;
-//  }
+  if(in.joystickInput.buttonRed) {
+    outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
+    outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
+    outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
+    outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
+  }
+  else {
+    outVals.motorCommand1 = 0;
+    outVals.motorCommand2 = 0;
+    outVals.motorCommand3 = 0;
+    outVals.motorCommand4 = 0;
+  }
     outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
     outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
     outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
