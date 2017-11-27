@@ -31,6 +31,7 @@ float p = 0.01f; //rho, the gyro/accel trade-off scalar default value: .01
 
 // controller variable initialization
 Vec3f cmdAngAcc = Vec3f(0,0,0);
+
 Vec3f desAngVel = Vec3f(0,0,0);
 
 Vec3f cmdAngVel = Vec3f(0,0,0);
@@ -259,10 +260,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     outVals.motorCommand3 = 0;
     outVals.motorCommand4 = 0;
   }
-    outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
-    outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
-    outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
-    outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
 
   //  // 4.4.1:
   //  if (in.joystickInput.buttonBlue) {
@@ -322,10 +319,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 //  return outVals;
 //
 //}
-
-
-
-
 
 
 void PrintStatus() {
