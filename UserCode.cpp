@@ -46,16 +46,15 @@ float k = 0.01f;
 // time constant for controllers on each axis
 // D gains on each axis
 float const timeConstant_rollRate = 0.04f; // [s]
-float const timeConstant_pitchRate = timeConstant_rollRate;
+float const timeConstant_pitchRate = 0.04f;
 float const timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
 // P gains on each axis
 float const timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-float const timeConstant_pitchAngle = timeConstant_rollAngle;
+float const timeConstant_pitchAngle = 0.12f;
 float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
 // time constant for horizontal controller:
-
 const float timeConst_horizVel = 1.0f; //2.0
 const float timeConst_horizPos_1 = 2.0f;
 const float timeConst_horizPos_2 = 2.0f;
@@ -147,11 +146,12 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // prediction
   // (just assume velocity is constant):
-  //estVelocity_1 = estVelocity_1 + 0 * dt; // need to fix estimated estVelocity to account for the acceleration
-  //estVelocity_2 = estVelocity_2 + 0 * dt;
+  estVelocity_1 = estVelocity_1 + 0 * dt;
+  estVelocity_2 = estVelocity_2 + 0 * dt;
 
-  oldEstVelocity_1 = estVelocity_1;
-  oldEstVelocity_2 = estVelocity_2;
+  // trying to use accelerometer to update translational velocities
+  //oldEstVelocity_1 = estVelocity_1;
+  //oldEstVelocity_2 = estVelocity_2;
 
   // correction step, directly after the prediction step:
   float const mixHorizVel = 0.5f; //.1
@@ -173,10 +173,11 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
 
   }
-  // dont assume velocity is constant
-  estVelocity_1 = oldEstVelocity_1 + (estVelocity_1 - oldEstVelocity_1)/dt;
-  estVelocity_2 = oldEstVelocity_2 + (estVelocity_2 - oldEstVelocity_2)/dt;
 
+  // trying to use accelerometer to update translational velocities
+  // dont assume velocity is constant
+  //estVelocity_1 = oldEstVelocity_1 + p*(in.imuMeasurement.accelerometer.x)*dt;
+  //estVelocity_2 = oldEstVelocity_2 + p*(in.imuMeasurement.accelerometer.y)*dt;
 
   // Integrate optical flow for position estimation
   float desPos1 = 0;
@@ -206,7 +207,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //float desYawAng = 0;
 
   // Vertical Controller
-  const float desHeight = 0.5f;
+  const float desHeight = 0.5f; //update this to make it smoother
   const float desAcc3 = -2 * dampingRatio_height * natFreq_height
       * estVelocity_3
       - natFreq_height * natFreq_height * (estHeight - desHeight);
