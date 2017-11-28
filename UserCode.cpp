@@ -106,19 +106,19 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //gain scheduling
   if (loop_count < 5){
     // D gains on each axis
-    timeConstant_rollRate = 0.04f*(2 - loop_count/5); // [s]
-    timeConstant_pitchRate = 0.04f*(2 - loop_count/5);
-    timeConstant_yawRate = 0.1f*(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+    timeConstant_rollRate = 0.04f*1/(2 - loop_count/5); // [s]
+    timeConstant_pitchRate = 0.04f*1/(2 - loop_count/5);
+    timeConstant_yawRate = 0.1f*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
     // P gains on each axis
-    timeConstant_rollAngle = 0.12f*(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-    timeConstant_pitchAngle = 0.12f*(2 - loop_count/5);
-    timeConstant_yawAngle = 0.2f*(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+    timeConstant_rollAngle = 0.12f*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+    timeConstant_pitchAngle = 0.12f*1/(2 - loop_count/5);
+    timeConstant_yawAngle = 0.2f*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
     // time constant for horizontal controller:
-    timeConst_horizVel = 1.0f*(2 - loop_count/5); //2.0
-    timeConst_horizPos_1 = 2.0f*(2 - loop_count/5);
-    timeConst_horizPos_2 = 2.0f*(2 - loop_count/5);
+    timeConst_horizVel = 1.0f*1/(2 - loop_count/5); //2.0
+    timeConst_horizPos_1 = 2.0f*1/(2 - loop_count/5);
+    timeConst_horizPos_2 = 2.0f*1/(2 - loop_count/5);
   }
   else{
     // time constant for controllers on each axis
