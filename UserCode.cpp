@@ -30,18 +30,23 @@ float estYaw = 0;
 float p = 0.01f; //rho, the gyro/accel trade-off scalar default value: .01
 
 // controller variable initialization
+float loop_count = 0; // used for scaling up the desired height during take off
+
 Vec3f cmdAngAcc = Vec3f(0,0,0);
 
 Vec3f desAngVel = Vec3f(0,0,0);
 
 Vec3f cmdAngVel = Vec3f(0,0,0);
 
+float desHeight = 0;
+
+float desAcc3 = 0;
+
 // propeller distance:
 float l = 33e-3f;
 
 // propeller coefficient
 float k = 0.01f;
-
 
 // time constant for controllers on each axis
 // D gains on each axis
@@ -61,7 +66,7 @@ const float timeConst_horizPos_2 = 2.0f;
 
 // time constants for the attitude control
 float const natFreq_height = 2.0f;
-float const dampingRatio_height = 0.7f;
+float const dampingRatio_height = 0.35f; //0.7 before
 
 float estHeight = 0;
 float estVelocity_1 = 0;
@@ -207,10 +212,25 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //float desYawAng = 0;
 
   // Vertical Controller
-  const float desHeight = 0.5f; //update this to make it smoother
-  const float desAcc3 = -2 * dampingRatio_height * natFreq_height
-      * estVelocity_3
-      - natFreq_height * natFreq_height * (estHeight - desHeight);
+  // scale up the desired height value for a smooth takeoff
+//  if (loop_count < 10.0f) {
+//    desHeight = loop_count / 20.0f;
+//    desAcc3 = -2 * dampingRatio_height * natFreq_height
+//        * estVelocity_3
+//        - natFreq_height * natFreq_height * (estHeight - desHeight);
+//    desAcc3 = desAcc3 * loop_count / 10.0f;
+//  }
+//  else {
+//    desHeight = 0.5f;
+//    desAcc3 = -2 * dampingRatio_height * natFreq_height
+//      * estVelocity_3
+//      - natFreq_height * natFreq_height * (estHeight - desHeight);
+//  }
+
+  desHeight = 0.5f;
+  desAcc3 = -2 * dampingRatio_height * natFreq_height
+    * estVelocity_3
+    - natFreq_height * natFreq_height * (estHeight - desHeight);
 
   //desired normalized total thrust:
   float desNormalizedAcceleration = (gravity
@@ -254,6 +274,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
     outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
     outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
+
+    loop_count += dt;
+
   }
   else {
     outVals.motorCommand1 = 0;
