@@ -50,23 +50,23 @@ float k = 0.01f;
 
 // time constant for controllers on each axis
 // D gains on each axis
-float const timeConstant_rollRate = 0.04f; // [s]
-float const timeConstant_pitchRate = 0.04f;
-float const timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+float timeConstant_rollRate = 0.04f; // [s]
+float timeConstant_pitchRate = 0.04f;
+float timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
 // P gains on each axis
-float const timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-float const timeConstant_pitchAngle = 0.12f;
-float const timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+float timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+float timeConstant_pitchAngle = 0.12f;
+float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
 // time constant for horizontal controller:
-const float timeConst_horizVel = 1.0f; //2.0
-const float timeConst_horizPos_1 = 2.0f;
-const float timeConst_horizPos_2 = 2.0f;
+float timeConst_horizVel = 1.0f; //2.0
+float timeConst_horizPos_1 = 2.0f;
+float timeConst_horizPos_2 = 2.0f;
 
 // time constants for the attitude control
-float const natFreq_height = 2.0f;
-float const dampingRatio_height = 0.35f; //0.7 before
+float natFreq_height = 2.0f;
+float dampingRatio_height = 0.35f; //0.7 before
 
 float estHeight = 0;
 float estVelocity_1 = 0;
@@ -102,6 +102,41 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     estGyroBias = estGyroBias + (in.imuMeasurement.rateGyro / 500.0f);
   }
   rateGyro_corr = in.imuMeasurement.rateGyro - estGyroBias;
+  
+  //gain scheduling
+  if (loop_count < 5){
+    // D gains on each axis
+    timeConstant_rollRate = 0.04f*(2 - loop_count/5); // [s]
+    timeConstant_pitchRate = 0.04f*(2 - loop_count/5);
+    timeConstant_yawRate = 0.1f*(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+
+    // P gains on each axis
+    timeConstant_rollAngle = 0.12f*(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+    timeConstant_pitchAngle = 0.12f*(2 - loop_count/5);
+    timeConstant_yawAngle = 0.2f*(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+
+    // time constant for horizontal controller:
+    timeConst_horizVel = 1.0f*(2 - loop_count/5); //2.0
+    timeConst_horizPos_1 = 2.0f*(2 - loop_count/5);
+    timeConst_horizPos_2 = 2.0f*(2 - loop_count/5);
+  }
+  else{
+    // time constant for controllers on each axis
+    // D gains on each axis
+    timeConstant_rollRate = 0.04f; // [s]
+    timeConstant_pitchRate = 0.04f;
+    timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+
+    // P gains on each axis
+    timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+    timeConstant_pitchAngle = 0.12f;
+    timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+
+    // time constant for horizontal controller:
+    timeConst_horizVel = 1.0f; //2.0
+    timeConst_horizPos_1 = 2.0f;
+    timeConst_horizPos_2 = 2.0f;
+  }
 
   //  ***Gyro only attitude estimator***
   //estRoll = estRoll + dt*rateGyro_corr.x;
