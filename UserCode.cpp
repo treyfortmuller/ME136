@@ -32,7 +32,7 @@ float p = 0.01f; //rho, the gyro/accel trade-off scalar default value: .01
 
 // controller variable initialization
 float loop_count = 0; // used for scaling up the desired height during take off
-
+float loop_count_roll = 0;
 Vec3f cmdAngAcc = Vec3f(0,0,0);
 
 Vec3f desAngVel = Vec3f(0,0,0);
@@ -328,15 +328,40 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
 
   // run the controller
+
   if(in.joystickInput.buttonRed) {
-
-    outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
-    outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
-    outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
-    outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
-
+    if (in.joystickInput.buttonBlue) {
+      if (loop_count_roll < 1) {
+        float fact = 1.0f;
+        outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1+(fact*cp1)));
+        outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2+(fact*cp2)));
+        outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3+(fact*cp3)));
+        outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4+(fact*cp4)));
+      }
+      else if (loop_count_roll > 1 and estRoll < (360*rad2deg)) {
+          int quat_thr = 255.0;
+          outVals.motorCommand1 = quat_thr;
+          outVals.motorCommand2 = 0;
+          outVals.motorCommand3 = 0;
+          outVals.motorCommand4 = quat_thr;
+      } else {
+        outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
+        outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
+        outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
+        outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
+      }
+      if (estRoll >= (360*rad2deg)) {
+        estRoll = 0;
+      }
+      loop_count_roll += dt;
+    }
+    else {
+      outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
+      outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
+      outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
+      outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
+    }
     loop_count += dt;
-
   }
   else {
     outVals.motorCommand1 = 0;
@@ -344,6 +369,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     outVals.motorCommand3 = 0;
     outVals.motorCommand4 = 0;
   }
+
   if (in.joystickInput.buttonYellow) {
     if (desYawAng >= (360*rad2deg)) {
       desYawAng = 0;
