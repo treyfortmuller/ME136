@@ -96,6 +96,8 @@ float estVelocity_3 = 0;
 float oldEstVelocity_1 = 0;
 float oldEstVelocity_2 = 0;
 
+const float p_v = 1;
+
 // integrating optical flow to control around 0 horizontal position
 float estPos_1 = 0;
 float estPos_2 = 0;
@@ -206,12 +208,12 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // prediction
   // (just assume velocity is constant):
-  estVelocity_1 = estVelocity_1 + 0 * dt;
-  estVelocity_2 = estVelocity_2 + 0 * dt;
+//  estVelocity_1 = estVelocity_1 + 0 * dt;
+//  estVelocity_2 = estVelocity_2 + 0 * dt;
 
   // trying to use accelerometer to update translational velocities
-  //oldEstVelocity_1 = estVelocity_1;
-  //oldEstVelocity_2 = estVelocity_2;
+  oldEstVelocity_1 = estVelocity_1;
+  oldEstVelocity_2 = estVelocity_2;
 
   // correction step, directly after the prediction step:
   float const mixHorizVel = 0.5f; //.1
@@ -233,11 +235,13 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
 
   }
-
+  estVelocity_1 = estVelocity_1 + (estVelocity_1 - oldEstVelocity_1) * p_v;
+  estVelocity_2 = estVelocity_2 + (estVelocity_2 - oldEstVelocity_2) * p_v;
   // trying to use accelerometer to update translational velocities
   // dont assume velocity is constant
   //estVelocity_1 = oldEstVelocity_1 + p*(in.imuMeasurement.accelerometer.x)*dt;
   //estVelocity_2 = oldEstVelocity_2 + p*(in.imuMeasurement.accelerometer.y)*dt;
+  estVel
 
   // Integrate optical flow for position estimation
   float desPos1 = 0;
@@ -268,14 +272,14 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // Vertical Controller
   // scale up the desired height value for a smooth takeoff
-  if (loop_count < 10.0f) {
+  if (loop_count < 5.0f) {
     natFreq_height = 2.0f;
-    dampingRatio_height = 0.7f;
-    desHeight = loop_count / 20.0f;
+    dampingRatio_height = 1.4f;
+    desHeight = loop_count / 10.0f;
     desAcc3 = -2 * dampingRatio_height * natFreq_height
         * estVelocity_3
         - natFreq_height * natFreq_height * (estHeight - desHeight);
-    desAcc3 = desAcc3 * loop_count / 10.0f;
+    //desAcc3 = desAcc3 * loop_count / 10.0f;
   }
   else {
     natFreq_height = 2.0f;
