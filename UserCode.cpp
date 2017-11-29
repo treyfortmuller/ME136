@@ -77,10 +77,10 @@ float timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 //float timeConst_horizVel = 1.0f; //2.0
 //float timeConst_horizPos_1 = 2.0f;
 //float timeConst_horizPos_2 = 2.0f;
-const float h_vel = 1.0f;
-const float h_pos1 = 2.0f;
-const float h_pos2 = 2.0f;
-float timeConst_horizVel = h_vel; //2.0
+const float h_vel = 1.0f; //1.0f
+const float h_pos1 = 5.0f; //2.0f
+const float h_pos2 = 5.0f; // 2.0f
+float timeConst_horizVel = h_vel;
 float timeConst_horizPos_1 = h_pos1;
 float timeConst_horizPos_2 = h_pos2;
 
@@ -275,7 +275,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     desAcc3 = -2 * dampingRatio_height * natFreq_height
         * estVelocity_3
         - natFreq_height * natFreq_height * (estHeight - desHeight);
-    desAcc3 = desAcc3 * loop_count / 10.0f;
+    //desAcc3 = desAcc3 * loop_count / 10.0f;
   }
   else {
     natFreq_height = 2.0f;
