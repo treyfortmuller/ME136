@@ -268,10 +268,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // Vertical Controller
   // scale up the desired height value for a smooth takeoff
-  if (loop_count < 10.0f) {
+  if (loop_count < 5.0f) {
     natFreq_height = 2.0f;
-    dampingRatio_height = 0.7f;
-    desHeight = loop_count / 20.0f;
+    dampingRatio_height = 1.4f;
+    desHeight = loop_count / 10.0f;
     desAcc3 = -2 * dampingRatio_height * natFreq_height
         * estVelocity_3
         - natFreq_height * natFreq_height * (estHeight - desHeight);
@@ -362,11 +362,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[6] = estHeight;
   outVals.telemetryOutputs_plusMinus100[7] = desRollAng;
   outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
-  outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
-  outVals.telemetryOutputs_plusMinus100[10] = estPos1;
-  outVals.telemetryOutputs_plusMinus100[11] = estPos2;
-  outVals.telemetryOutputs_plusMinus100[12] = desAcc3;
-  outVals.telemetryOutputs_plusMinus100[13] = loop_count;
+  outVals.telemetryOutputs_plusMinus100[9] = desAcc3;
+  outVals.telemetryOutputs_plusMinus100[10] = estPos_1;
+  outVals.telemetryOutputs_plusMinus100[11] = estPos_2;
   return outVals;
 
 }
