@@ -78,7 +78,7 @@ float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 //float timeConst_horizPos_2 = 2.0f;
 const float h_vel = 1.0f; //1.0f
 const float h_pos1 = 5.0f; //5.0  //2.0f
-const float h_pos2 = 5.0f; //5.0 // 2.0f
+const float h_pos2 = .0f; //5.0 // 2.0f
 float timeConst_horizVel = h_vel;
 float timeConst_horizPos_1 = h_pos1;
 float timeConst_horizPos_2 = h_pos2;
@@ -88,7 +88,7 @@ float desRollAng = 0;
 float desPitchAng = 0;
 
 // time constants for the attitude control
-float natFreq_height = 2.0f;
+float natFreq_height = 2.0f; //2.0f
 float dampingRatio_height = 0.7f; //0.7 before
 
 float estHeight = 0;
@@ -261,10 +261,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     
     // when we're close to 0, reset integral action
     if (-0.1f < estPos_1 and  estPos_1 < 0.1f) {
-      g1 = 0;
+      g1 = g1*0.95f;
     }
     if (-0.1f < estPos_2 and estPos_2 < 0.1f){
-      g2 = 0;
+      g2 = g2*0.95f;
     }
     
     desPos1 = -g1;
@@ -329,8 +329,11 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   
     tot_mot_force = cp1 + cp2 + cp3 + cp4;
   }
-  // run the controller
 
+  // run the controller
+  if (estRoll >= (6.28f)) {
+          estRoll = 0;
+  }
   if(in.joystickInput.buttonRed) {
     if (in.joystickInput.buttonBlue) {
       if (loop_count_roll < 1) {
@@ -340,31 +343,35 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
         outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3+(fact*cp3)));
         outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4+(fact*cp4)));
       }
-      else if (loop_count_roll > 1 and estRoll < (5.0f) and havent_flipped) {
+      else if (loop_count_roll > 1 and estRoll < (3.5f) and havent_flipped) {
         time_blue = 1; 
-        outVals.motorCommand1 = 90;
+        outVals.motorCommand1 = 160;
         outVals.motorCommand2 = 40;
         outVals.motorCommand3 = 40;
-        outVals.motorCommand4 = 90;
+        outVals.motorCommand4 = 160;
       }
-      else if (estRoll > (5.0f) and estRoll < (6.28f) and loop_count_roll > 1 ){
+      else if (estRoll > (3.5f) and estRoll < (6.28f) and loop_count_roll > 1 ){
         time_blue = 1; 
         outVals.motorCommand1 = 40;
-        outVals.motorCommand2 = 90;
-        outVals.motorCommand3 = 90;
+        outVals.motorCommand2 = 160;
+        outVals.motorCommand3 = 160;
         outVals.motorCommand4 = 40;
         havent_flipped = 0;
         } 
-      else {
+      else if (estRoll < 0.5f and estRoll > -0.5f and loop_count_roll < 2.0f){
         time_blue = 0;
+        outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1*2));
+        outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2*2));
+        outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3*2));
+        outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4*2));
+      }
+      else {
         outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
         outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
         outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
         outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
       }
-      if (estRoll >= (6.28f)) {
-        estRoll = 0;
-      }
+
       loop_count_roll += dt;
     }
     else {
