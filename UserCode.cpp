@@ -4,6 +4,7 @@
 
 #include <stdio.h> //for printf
 #include <math.h> //for trig functions
+#include <stdlib.h>
 
 //An example of a variable that persists beyond the function call.
 float exampleVariable_float = 0.0f;  //Note the trailing 'f' in the number. This is to force single precision floating point.
@@ -270,6 +271,12 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   if (g2 < -g_lim){
     g2 = -g_lim;
   }
+  if (abs(estPos_1) < 0.25){
+    g1 = 0;
+  }
+  if (abs(estPos_2) < 0.25){
+    g2 = 0;
+  }
   desPos1 = -g1;
   desPos2 = -g2;
   
@@ -385,8 +392,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[5] = estVelocity_3;
   outVals.telemetryOutputs_plusMinus100[6] = estHeight;
   outVals.telemetryOutputs_plusMinus100[7] = desRollAng;
-  outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
-  outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
+  outVals.telemetryOutputs_plusMinus100[8] = g1;
+  outVals.telemetryOutputs_plusMinus100[9] = g2;
   outVals.telemetryOutputs_plusMinus100[10] = estPos_1;
   outVals.telemetryOutputs_plusMinus100[11] = estPos_2;
   //outVals.telemetryOutputs_plusMinus100[12] = desAcc3;
