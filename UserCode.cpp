@@ -90,15 +90,20 @@ float timeConst_horizPos_1 = h_pos1;
 float timeConst_horizPos_2 = h_pos2;
 
 float desYawAng = 0;
+float desRollAng = 0;
+float desPitchAng = 0;
 
 // time constants for the attitude control
 float natFreq_height = 2.0f;
 float dampingRatio_height = 0.7f; //0.7 before
 
 float estHeight = 0;
+float des_total_force = 0;
 float estVelocity_1 = 0;
 float estVelocity_2 = 0;
 float estVelocity_3 = 0;
+
+float desNormalizedAcceleration = 0;
 
 float oldEstVelocity_1 = 0;
 float oldEstVelocity_2 = 0;
@@ -116,7 +121,11 @@ const float g_lim = 5; // windup prevention for position integral control
 
 const float k_g = 1.0f; // integral control gain
 
-bool = time_blue;
+bool time_blue = 0;
+float cp1 = 0;
+float cp2 = 0;
+float cp3 = 0;
+float cp4 = 0;
 
 // store last height measurement
 float lastHeightMeas_meas = 0;
@@ -166,9 +175,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));
   
   if (time_blue) {
-    estRoll = (1.0f-p)*(estRoll + dt*AngVel.x)
-    estPitch = (1.0f-p)*(estPitch + dt*AngVel.y)
+    estRoll = (1.0f-p)*(estRoll + dt*AngVel.x);
+    estPitch = (1.0f-p)*(estPitch + dt*AngVel.y);
     estYaw = estYaw + dt*AngVel.z;
+
   }
   else{
     // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
@@ -274,8 +284,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     float desAcc2 = -(1.0f / timeConst_horizVel) * (estVelocity_2 - desVel2);
     
     //control around velocity
-    float desRollAng = -desAcc2/ gravity;
-    float desPitchAng = desAcc1/ gravity;
+    desRollAng = -desAcc2/ gravity;
+    desPitchAng = desAcc1/ gravity;
     
     // Vertical Controller
     // scale up the desired height value for a smooth takeoff
@@ -302,11 +312,11 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     //    - natFreq_height * natFreq_height * (estHeight - desHeight);
     
     //desired normalized total thrust:
-    float desNormalizedAcceleration = (gravity + desAcc3) / (cosf(estRoll) * cosf(estPitch));
+    desNormalizedAcceleration = (gravity + desAcc3) / (cosf(estRoll) * cosf(estPitch));
     
     // desired force
-    float des_total_force = mass * desNormalizedAcceleration;
-    
+    des_total_force = mass * desNormalizedAcceleration;
+
     // ***Angle Controller***
     Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
     
@@ -327,14 +337,14 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     float n1 = cmdAngAcc.x*inertia_xx;
     float n2 = cmdAngAcc.y*inertia_yy;
     float n3 = cmdAngAcc.z*inertia_zz;
-    
+      
     // MIXER
     // convert desired torque + total force to four motor forces
-    float cp1 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((-1.0f/l)*n2) + ((1.0f/k)*n3) );
-    float cp2 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((-1.0f/l)*n2) + ((-1.0f/k)*n3) );
-    float cp3 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((1.0f/l)*n2) + ((1.0f/k)*n3) );
-    float cp4 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((1.0f/l)*n2) + ((-1.0f/k)*n3) );
-    
+    cp1 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((-1.0f/l)*n2) + ((1.0f/k)*n3) );
+    cp2 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((-1.0f/l)*n2) + ((-1.0f/k)*n3) );
+    cp3 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((1.0f/l)*n2) + ((1.0f/k)*n3) );
+    cp4 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((1.0f/l)*n2) + ((-1.0f/k)*n3) );
+  
     tot_mot_force = cp1 + cp2 + cp3 + cp4;
   }
   // run the controller
@@ -354,7 +364,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
         outVals.motorCommand2 = 40;
         outVals.motorCommand3 = 40;
         outVals.motorCommand4 = 240;
-       
+      }
       else if (estRoll > (330*rad2deg) and estRoll < (360*rad2deg) and loop_count_roll > 1 ){
         time_blue = 1; 
         outVals.motorCommand1 = 40;
