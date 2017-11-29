@@ -77,7 +77,7 @@ float timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 //float timeConst_horizVel = 1.0f; //2.0
 //float timeConst_horizPos_1 = 2.0f;
 //float timeConst_horizPos_2 = 2.0f;
-const float h_vel = 0.5f;
+const float h_vel = 1.0f;
 const float h_pos1 = 2.0f;
 const float h_pos2 = 2.0f;
 float timeConst_horizVel = h_vel; //2.0
@@ -86,7 +86,7 @@ float timeConst_horizPos_2 = h_pos2;
 
 // time constants for the attitude control
 float natFreq_height = 2.0f;
-float dampingRatio_height = 0.35f; //0.7 before
+float dampingRatio_height = 0.7f; //0.7 before
 
 float estHeight = 0;
 float estVelocity_1 = 0;
@@ -268,23 +268,27 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // Vertical Controller
   // scale up the desired height value for a smooth takeoff
-//  if (loop_count < 10.0f) {
-//    desHeight = loop_count / 20.0f;
-//    desAcc3 = -2 * dampingRatio_height * natFreq_height
-//        * estVelocity_3
-//        - natFreq_height * natFreq_height * (estHeight - desHeight);
-//    desAcc3 = desAcc3 * loop_count / 10.0f;
-//  }
-//  else {
-//    desHeight = 0.5f;
-//    desAcc3 = -2 * dampingRatio_height * natFreq_height * estVelocity_3
-//      - natFreq_height * natFreq_height * (estHeight - desHeight);
-//  }
-//
-  desHeight = 0.5f;
-  desAcc3 = -2.0f * dampingRatio_height * natFreq_height
-    * estVelocity_3
-    - natFreq_height * natFreq_height * (estHeight - desHeight);
+  if (loop_count < 10.0f) {
+    natFreq_height = 2.0f;
+    dampingRatio_height = 0.7f;
+    desHeight = loop_count / 20.0f;
+    desAcc3 = -2 * dampingRatio_height * natFreq_height
+        * estVelocity_3
+        - natFreq_height * natFreq_height * (estHeight - desHeight);
+    desAcc3 = desAcc3 * loop_count / 10.0f;
+  }
+  else {
+    natFreq_height = 2.0f;
+    dampingRatio_height = 0.7f;
+    desHeight = 0.5f;
+    desAcc3 = -2 * dampingRatio_height * natFreq_height * estVelocity_3
+      - natFreq_height * natFreq_height * (estHeight - desHeight);
+  }
+
+//  desHeight = 0.5f;
+//  desAcc3 = -2.0f * dampingRatio_height * natFreq_height
+//    * estVelocity_3
+//    - natFreq_height * natFreq_height * (estHeight - desHeight);
 
   //desired normalized total thrust:
   float desNormalizedAcceleration = (gravity + desAcc3) / (cosf(estRoll) * cosf(estPitch));
@@ -359,6 +363,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[7] = desRollAng;
   outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
   outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
+  outVals.telemetryOutputs_plusMinus100[10] = estPos1;
+  outVals.telemetryOutputs_plusMinus100[11] = estPos2;
+  outVals.telemetryOutputs_plusMinus100[12] = desAcc3;
+  outVals.telemetryOutputs_plusMinus100[13] = loop_count;
   return outVals;
 
 }
