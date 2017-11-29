@@ -100,12 +100,18 @@ float estVelocity_3 = 0;
 float oldEstVelocity_1 = 0;
 float oldEstVelocity_2 = 0;
 
+const float p_v = 0; // update estimated translational velocity with acceleration mixing constant
+
 // integrating optical flow to control around 0 horizontal position
 float estPos_1 = 0;
 float estPos_2 = 0;
-float g1 = 0;
-float g2 = 0;
-const float g_lim = 5;
+
+float g1 = 0; // accumated position error for integral control on position
+float g2 = 0; // ""
+
+const float g_lim = 5; // windup prevention for position integral control
+
+const float k_g = 1.0f; // integral control gain
 
 // store last height measurement
 float lastHeightMeas_meas = 0;
@@ -213,12 +219,12 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // prediction
   // (just assume velocity is constant):
-  estVelocity_1 = estVelocity_1 + 0 * dt;
-  estVelocity_2 = estVelocity_2 + 0 * dt;
+  //estVelocity_1 = estVelocity_1 + 0 * dt;
+  //estVelocity_2 = estVelocity_2 + 0 * dt;
 
   // trying to use accelerometer to update translational velocities
-  //oldEstVelocity_1 = estVelocity_1;
-  //oldEstVelocity_2 = estVelocity_2;
+  oldEstVelocity_1 = estVelocity_1;
+  oldEstVelocity_2 = estVelocity_2;
 
   // correction step, directly after the prediction step:
   float const mixHorizVel = 0.5f; //.1
@@ -240,11 +246,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
 
   }
-
-  // trying to use accelerometer to update translational velocities
-  // dont assume velocity is constant
-  //estVelocity_1 = oldEstVelocity_1 + p*(in.imuMeasurement.accelerometer.x)*dt;
-  //estVelocity_2 = oldEstVelocity_2 + p*(in.imuMeasurement.accelerometer.y)*dt;
+  // update translational velocity with estimated acceleration
+  //estVelocity_1 = estVelocity_1 + (estVelocity_1 - oldEstVelocity_1) * p_v;
+  //estVelocity_2 = estVelocity_2 + (estVelocity_2 - oldEstVelocity_2) * p_v;
 
   // Integrate optical flow for position estimation
   float desPos1 = 0;
@@ -256,9 +260,11 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
   
-  // add integral action to horizontal velocity controller
-  g1 += (estPos_1 - desPos1)*dt;
-  g2 += (estPos_2 - desPos2)*dt;
+  // add integral action to horizontal position controller
+  g1 += k_g * (estPos_1 - desPos1) * dt;
+  g2 += k_g * (estPos_2 - desPos2) * dt;
+
+  // prevent integral windup
   if (g1 > g_lim){
     g1 = g_lim;
   }
@@ -271,15 +277,18 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   if (g2 < -g_lim){
     g2 = -g_lim;
   }
-  if (abs(estPos_1) < 0.25){
+
+  // when we're close to 0, reset integral action
+  if (-0.1f < estPos_1 and  estPos_1 < 0.1f) {
     g1 = 0;
   }
-  if (abs(estPos_2) < 0.25){
+  if (-0.1f < estPos_2 and estPos_2 < 0.1f){
     g2 = 0;
   }
+
   desPos1 = -g1;
   desPos2 = -g2;
-  
+
   // Horizontal Controller
   float desVel1 = -(1.0f / timeConst_horizPos_1) * (estPos_1 - desPos1);
   float desVel2 = -(1.0f / timeConst_horizPos_2) * (estPos_2 - desPos2);
