@@ -83,6 +83,9 @@ const float h_pos2 = 2.0f;
 float timeConst_horizVel = h_vel; //2.0
 float timeConst_horizPos_1 = h_pos1;
 float timeConst_horizPos_2 = h_pos2;
+float g1 = 0;
+float g2 = 0;
+const float g_lim = 5;
 
 // time constants for the attitude control
 float natFreq_height = 2.0f;
@@ -252,7 +255,25 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
-
+  
+  // add integral action to horizontal velocity controller
+  g1 += (estPos_1 - desPos1)*dt;
+  g2 += (estPos_2 - desPos2)*dt;
+  if (g1 > g_lim){
+    g1 = g_lim;
+  }
+  if (g2 > g_lim){
+    g2 = g_lim;
+  }
+  if (g1 < -g_lim){
+    g1 = -g_lim;
+  }
+  if (g2 < -g_lim){
+    g2 = -g_lim;
+  }
+  desPos1 = -g1;
+  desPos2 = -g2;
+  
   // Horizontal Controller
   float desVel1 = -(1.0f / timeConst_horizPos_1) * (estPos_1 - desPos1);
   float desVel2 = -(1.0f / timeConst_horizPos_2) * (estPos_2 - desPos2);
