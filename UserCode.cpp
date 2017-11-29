@@ -50,19 +50,39 @@ float k = 0.01f;
 
 // time constant for controllers on each axis
 // D gains on each axis
-float timeConstant_rollRate = 0.04f; // [s]
-float timeConstant_pitchRate = 0.04f;
-float timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+//float timeConstant_rollRate = 0.04f; // [s]
+//float timeConstant_pitchRate = 0.04f;
+//float timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+const float d_roll = 0.04f;
+const float d_pitch = 0.04f;
+const float d_yaw = 0.1f;
+float timeConstant_rollRate = d_roll; // [s]
+float timeConstant_pitchRate = d_pitch;
+float timeConstant_yawRate = d_yaw; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+
 
 // P gains on each axis
-float timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-float timeConstant_pitchAngle = 0.12f;
-float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+//float timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+//float timeConstant_pitchAngle = 0.12f;
+//float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+const float p_roll = 0.12f;
+const float p_pitch = 0.12f;
+const float p_yaw = 0.2f;
+float timeConstant_rollAngle = p_roll; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+float timeConstant_pitchAngle = p_pitch;
+float timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
+    
 // time constant for horizontal controller:
-float timeConst_horizVel = 1.0f; //2.0
-float timeConst_horizPos_1 = 2.0f;
-float timeConst_horizPos_2 = 2.0f;
+//float timeConst_horizVel = 1.0f; //2.0
+//float timeConst_horizPos_1 = 2.0f;
+//float timeConst_horizPos_2 = 2.0f;
+const float h_vel = 1.0f;
+const float h_pos1 = 2.0f;
+const float h_pos2 = 2.0f;
+float timeConst_horizVel = h_vel; //2.0
+float timeConst_horizPos_1 = h_pos1;
+float timeConst_horizPos_2 = h_pos2;
 
 // time constants for the attitude control
 float natFreq_height = 2.0f;
@@ -105,37 +125,37 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   
   //gain scheduling
   if (loop_count < 5){
-    // D gains on each axis
-    timeConstant_rollRate = 0.04f*1/(2 - loop_count/5); // [s]
-    timeConstant_pitchRate = 0.04f*1/(2 - loop_count/5);
-    timeConstant_yawRate = 0.1f*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+//    // D gains on each axis
+//    timeConstant_rollRate = d_roll * 1 / (2 - loop_count/5); // [s]
+//    timeConstant_pitchRate = d_pitch * 1 / (2 - loop_count/5);
+//    timeConstant_yawRate = d_yaw * 1 / (2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
-    // P gains on each axis
-    timeConstant_rollAngle = 0.12f*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-    timeConstant_pitchAngle = 0.12f*1/(2 - loop_count/5);
-    timeConstant_yawAngle = 0.2f*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+//    // P gains on each axis
+//    timeConstant_rollAngle = p_roll*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+//    timeConstant_pitchAngle = p_pitch*1/(2 - loop_count/5);
+//    timeConstant_yawAngle = p_yaw*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
     // time constant for horizontal controller:
-    timeConst_horizVel = 1.0f*1/(2 - loop_count/5); //2.0
-    timeConst_horizPos_1 = 2.0f*1/(2 - loop_count/5);
-    timeConst_horizPos_2 = 2.0f*1/(2 - loop_count/5);
+    timeConst_horizVel = h_vel*1/(2 - loop_count/5); //2.0
+    timeConst_horizPos_1 = h_pos1*1/(2 - loop_count/5);
+    timeConst_horizPos_2 = h_pos2*1/(2 - loop_count/5);
   }
   else{
-    // time constant for controllers on each axis
-    // D gains on each axis
-    timeConstant_rollRate = 0.04f; // [s]
-    timeConstant_pitchRate = 0.04f;
-    timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
-
-    // P gains on each axis
-    timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-    timeConstant_pitchAngle = 0.12f;
-    timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+//    // time constant for controllers on each axis
+//    // D gains on each axis
+//    timeConstant_rollRate = d_roll; // [s]
+//    timeConstant_pitchRate = d_pitch;
+//    timeConstant_yawRate = d_yaw; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+//
+//    // P gains on each axis
+//    timeConstant_rollAngle = p_roll; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+//    timeConstant_pitchAngle = p_pitch;
+//    timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
     // time constant for horizontal controller:
-    timeConst_horizVel = 1.0f; //2.0
-    timeConst_horizPos_1 = 2.0f;
-    timeConst_horizPos_2 = 2.0f;
+    timeConst_horizVel = h_vel; //2.0
+    timeConst_horizPos_1 = h_pos1;
+    timeConst_horizPos_2 = h_pos2;
   }
 
   //  ***Gyro only attitude estimator***
@@ -257,19 +277,17 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 //  }
 //  else {
 //    desHeight = 0.5f;
-//    desAcc3 = -2 * dampingRatio_height * natFreq_height
-//      * estVelocity_3
+//    desAcc3 = -2 * dampingRatio_height * natFreq_height * estVelocity_3
 //      - natFreq_height * natFreq_height * (estHeight - desHeight);
 //  }
-
+//
   desHeight = 0.5f;
   desAcc3 = -2 * dampingRatio_height * natFreq_height
     * estVelocity_3
     - natFreq_height * natFreq_height * (estHeight - desHeight);
 
   //desired normalized total thrust:
-  float desNormalizedAcceleration = (gravity
-      + desAcc3) / (cosf(estRoll) * cosf(estPitch));
+  float desNormalizedAcceleration = (gravity + desAcc3) / (cosf(estRoll) * cosf(estPitch));
 
   // desired force
   float des_total_force = mass * desNormalizedAcceleration;
