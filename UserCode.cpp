@@ -238,12 +238,9 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
 
   }
+  // update translational velocity with estimated acceleration
   estVelocity_1 = estVelocity_1 + (estVelocity_1 - oldEstVelocity_1) * p_v;
   estVelocity_2 = estVelocity_2 + (estVelocity_2 - oldEstVelocity_2) * p_v;
-  // trying to use accelerometer to update translational velocities
-  // dont assume velocity is constant
-  //estVelocity_1 = oldEstVelocity_1 + p*(in.imuMeasurement.accelerometer.x)*dt;
-  //estVelocity_2 = oldEstVelocity_2 + p*(in.imuMeasurement.accelerometer.y)*dt;
 
   // Integrate optical flow for position estimation
   float desPos1 = 0;
@@ -255,9 +252,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
   
-  // add integral action to horizontal velocity controller
+  // add integral action to horizontal position controller
   g1 += (estPos_1 - desPos1)*dt;
   g2 += (estPos_2 - desPos2)*dt;
+
   if (g1 > g_lim){
     g1 = g_lim;
   }
@@ -270,9 +268,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   if (g2 < -g_lim){
     g2 = -g_lim;
   }
+  
   desPos1 = -g1;
   desPos2 = -g2;
-  
+
   // Horizontal Controller
   float desVel1 = -(1.0f / timeConst_horizPos_1) * (estPos_1 - desPos1);
   float desVel2 = -(1.0f / timeConst_horizPos_2) * (estPos_2 - desPos2);
