@@ -55,30 +55,23 @@ float k = 0.01f;
 
 // time constant for controllers on each axis
 // D gains on each axis
-//float timeConstant_rollRate = 0.04f; // [s]
-//float timeConstant_pitchRate = 0.04f;
-//float timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 float timeConstant_rollRate = 0.04f; // [s]
 float timeConstant_pitchRate = 0.04f;
 float timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
 
 // P gains on each axis
-//float timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-//float timeConstant_pitchAngle = 0.12f;
-//float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 float timeConstant_rollAngle = 0.16f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
 float timeConstant_pitchAngle = 0.16f;
 float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
     
 // time constant for horizontal controller:
-//float timeConst_horizVel = 1.0f; //2.0
-//float timeConst_horizPos_1 = 2.0f;
-//float timeConst_horizPos_2 = 2.0f;
 const float h_vel = 1.0f; //1.0f
-const float h_pos1 = 5.0f; //5.0  //2.0f
-const float h_pos2 = .0f; //5.0 // 2.0f
+
+const float h_pos1 = 5.0f; //2.0f
+const float h_pos2 = 5.0f; // 2.0f
+
 float timeConst_horizVel = h_vel;
 float timeConst_horizPos_1 = h_pos1;
 float timeConst_horizPos_2 = h_pos2;
@@ -127,9 +120,6 @@ float lastHeightMeas_time = 0;
 
 //initialize angular velocity variable
 Vec3f AngVel = Vec3f(0,0,0);
-
-//constants for turning off controller
-
 
 ////lab 5 code
 MainLoopOutput MainLoop(MainLoopInput const &in) {
@@ -398,14 +388,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
   }
 
-  //  // 4.4.1:
-  //  if (in.joystickInput.buttonBlue) {
-  //    desAng.y = 0.5236f;
-  //  }
-  //  else {
-  //    desAng.y = 0;
-  //  }
-
   //copy the inputs and outputs:
   lastMainLoopInputs = in;
   lastMainLoopOutputs = outVals;
@@ -424,41 +406,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   return outVals;
 
 }
-
-
-
-//MainLoopOutput MainLoop(MainLoopInput const &in) {
-//
-//  MainLoopOutput outVals;
-//  //  motorCommand1 -> located at body +x +y
-//  //  motorCommand2 -> located at body +x -y
-//  //  motorCommand3 -> located at body -x -y
-//  //  motorCommand4 -> located at body -x +y
-//
-//  float force = 0.0662f;
-//  // run the controller
-//  if(in.joystickInput.buttonRed) {
-//    outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(force));
-//    outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(force));
-//    outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(force));
-//    outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(force));
-//  }
-//  else {
-//    outVals.motorCommand1 = 0;
-//    outVals.motorCommand2 = 0;
-//    outVals.motorCommand3 = 0;
-//    outVals.motorCommand4 = 0;
-//  }
-//
-//
-//  //copy the inputs and outputs:
-//  lastMainLoopInputs = in;
-//  lastMainLoopOutputs = outVals;
-//
-//  return outVals;
-//
-//}
-
 
 void PrintStatus() {
   //For a quick reference on the printf function, see: http://www.cplusplus.com/reference/cstdio/printf/
@@ -519,20 +466,6 @@ void PrintStatus() {
          double(desYawAng), \
          double(estYaw));
   //  End Code Block 5.1.1:
-
-  //  printf("Example variable values:\n");
-  //  printf("  exampleVariable_int = %d\n", exampleVariable_int);
-  //  //Note that it is somewhat annoying to print float variables.
-  //  //  We need to cast the variable as double, and we need to specify
-  //  //  the number of digits we want (if you used simply "%f", it would
-  //  //  truncate to an integer.
-  //  //  Here, we print 6 digits, with three digits after the period.
-  //  printf("  exampleVariable_float = %6.3f\n", double(exampleVariable_float));
-  //
-  //  //We print the Vec3f by printing it's three components independently:
-  //  printf("  exampleVariable_Vec3f = (%6.3f, %6.3f, %6.3f)\n",
-  //         double(exampleVariable_Vec3f.x), double(exampleVariable_Vec3f.y),
-  //         double(exampleVariable_Vec3f.z));cc
 
   //just an example of how we would inspect the last main loop inputs and outputs:
   printf("Last main loop inputs:\n");
