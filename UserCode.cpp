@@ -58,24 +58,18 @@ float k = 0.01f;
 //float timeConstant_rollRate = 0.04f; // [s]
 //float timeConstant_pitchRate = 0.04f;
 //float timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
-const float d_roll = 0.04f;
-const float d_pitch = 0.04f;
-const float d_yaw = 0.1f;
-float timeConstant_rollRate = d_roll; // [s]
-float timeConstant_pitchRate = d_pitch;
-float timeConstant_yawRate = d_yaw; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+float timeConstant_rollRate = 0.04f; // [s]
+float timeConstant_pitchRate = 0.04f;
+float timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
 
 // P gains on each axis
 //float timeConstant_rollAngle = 0.12f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
 //float timeConstant_pitchAngle = 0.12f;
 //float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
-const float p_roll = 0.16f; // from 0.12
-const float p_pitch = 0.16f; // from 0.12
-const float p_yaw = 0.2f; // from 0.2
-float timeConstant_rollAngle = p_roll; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-float timeConstant_pitchAngle = p_pitch;
-float timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+float timeConstant_rollAngle = 0.16f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+float timeConstant_pitchAngle = 0.16f;
+float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
     
 // time constant for horizontal controller:
