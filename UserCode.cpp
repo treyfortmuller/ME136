@@ -78,12 +78,15 @@ float timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 //float timeConst_horizVel = 1.0f; //2.0
 //float timeConst_horizPos_1 = 2.0f;
 //float timeConst_horizPos_2 = 2.0f;
-const float h_vel = 1.0f; //1.0f
-const float h_pos1 = 5.0f; //2.0f
-const float h_pos2 = 5.0f; // 2.0f
-float timeConst_horizVel = h_vel;
+const float h_vel = 1.0f;
+const float h_pos1 = 2.0f;
+const float h_pos2 = 2.0f;
+float timeConst_horizVel = h_vel; //2.0
 float timeConst_horizPos_1 = h_pos1;
 float timeConst_horizPos_2 = h_pos2;
+float g1 = 0;
+float g2 = 0;
+const float g_lim = 5;
 
 float desYawAng = 0;
 
@@ -98,6 +101,8 @@ float estVelocity_3 = 0;
 
 float oldEstVelocity_1 = 0;
 float oldEstVelocity_2 = 0;
+
+const float p_v = 1;
 
 // integrating optical flow to control around 0 horizontal position
 float estPos_1 = 0;
@@ -209,12 +214,12 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // prediction
   // (just assume velocity is constant):
-  estVelocity_1 = estVelocity_1 + 0 * dt;
-  estVelocity_2 = estVelocity_2 + 0 * dt;
+//  estVelocity_1 = estVelocity_1 + 0 * dt;
+//  estVelocity_2 = estVelocity_2 + 0 * dt;
 
   // trying to use accelerometer to update translational velocities
-  //oldEstVelocity_1 = estVelocity_1;
-  //oldEstVelocity_2 = estVelocity_2;
+  oldEstVelocity_1 = estVelocity_1;
+  oldEstVelocity_2 = estVelocity_2;
 
   // correction step, directly after the prediction step:
   float const mixHorizVel = 0.5f; //.1
@@ -236,7 +241,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     }
 
   }
-
+  estVelocity_1 = estVelocity_1 + (estVelocity_1 - oldEstVelocity_1) * p_v;
+  estVelocity_2 = estVelocity_2 + (estVelocity_2 - oldEstVelocity_2) * p_v;
   // trying to use accelerometer to update translational velocities
   // dont assume velocity is constant
   //estVelocity_1 = oldEstVelocity_1 + p*(in.imuMeasurement.accelerometer.x)*dt;
@@ -251,7 +257,25 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
-
+  
+  // add integral action to horizontal velocity controller
+  g1 += (estPos_1 - desPos1)*dt;
+  g2 += (estPos_2 - desPos2)*dt;
+  if (g1 > g_lim){
+    g1 = g_lim;
+  }
+  if (g2 > g_lim){
+    g2 = g_lim;
+  }
+  if (g1 < -g_lim){
+    g1 = -g_lim;
+  }
+  if (g2 < -g_lim){
+    g2 = -g_lim;
+  }
+  desPos1 = -g1;
+  desPos2 = -g2;
+  
   // Horizontal Controller
   float desVel1 = -(1.0f / timeConst_horizPos_1) * (estPos_1 - desPos1);
   float desVel2 = -(1.0f / timeConst_horizPos_2) * (estPos_2 - desPos2);
@@ -373,9 +397,11 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[6] = desYawAng;
   outVals.telemetryOutputs_plusMinus100[7] = estYaw;
   outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
-  outVals.telemetryOutputs_plusMinus100[9] = desAcc3;
+  outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
   outVals.telemetryOutputs_plusMinus100[10] = estPos_1;
   outVals.telemetryOutputs_plusMinus100[11] = estPos_2;
+  //outVals.telemetryOutputs_plusMinus100[12] = desAcc3;
+  //outVals.telemetryOutputs_plusMinus100[13] = loop_count;
   return outVals;
 
 }
