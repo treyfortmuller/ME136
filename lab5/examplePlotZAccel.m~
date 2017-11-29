@@ -106,49 +106,67 @@ close all;
 
 %% Deliverable 4:
 
-%% Generate est roll angle desired roll angle graph;
-figure;
-name = 'del4.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
-log = csv2struct(name, 29);
-hold off;
-plot(log.time, log.debugval0, 'color', 'r'); %estRoll
-hold on;
-plot(log.time, log.debugval7, 'color', 'b');  %desRoll
+% %% Generate est roll angle desired roll angle graph;
+% figure;
+% name = 'del4.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
+% log = csv2struct(name, 29);
+% hold off;
+% plot(log.time, log.debugval0, 'color', 'r'); %estRoll
+% hold on;
+% plot(log.time, log.debugval7, 'color', 'b');  %desRoll
+% 
+% xlabel('Time (s)');
+% ylabel({'Roll Angle Estimate (rad) (red)', 'Desired Roll Angle (rad) (blue)'});
+% str = char([name(1:end-4) '_rollest_rolldes.jpg']);
+% saveas(gcf, str);
+% 
+% %% Generate est pitch angle desired pitch angle graph;
+% figure;
+% name = 'del4.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
+% log = csv2struct(name, 29);
+% hold off;
+% plot(log.time, log.debugval1, 'color', 'r'); %estPitch
+% hold on;
+% plot(log.time, log.debugval8, 'color', 'b');  %desPitch
+% 
+% xlabel('Time (s)');
+% ylabel({'Pitch Angle Estimate (rad) (red)', 'Desired Pitch Angle (rad) (blue)'});
+% str = char([name(1:end-4) '_pitchest_pitchdes.jpg']);
+% saveas(gcf, str);
+% 
+% %% Generate est yaw angle desired yaw angle graph;
+% figure;
+% name = 'del4.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
+% log = csv2struct(name, 29);
+% hold off;
+% plot(log.time, log.debugval2, 'color', 'r'); %estYaw
+% hold on;
+% des_yaw = zeros(length(log.debugval2), 1);
+% plot(log.time, des_yaw, 'color', 'b');  %desRoll
+% 
+% xlabel('Time (s)');
+% ylabel({'Yaw Angle Estimate (rad) (red)', 'Desired Yaw Angle (rad) (blue)'});
+% str = char([name(1:end-4) '_yawest_yawdes.jpg']);
+% saveas(gcf, str);
 
-xlabel('Time (s)');
-ylabel({'Roll Angle Estimate (rad) (red)', 'Desired Roll Angle (rad) (blue)'});
-str = char([name(1:end-4) '_rollest_rolldes.jpg']);
-saveas(gcf, str);
-
-%% Generate est pitch angle desired pitch angle graph;
-figure;
-name = 'del4.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
-log = csv2struct(name, 29);
-hold off;
-plot(log.time, log.debugval1, 'color', 'r'); %estPitch
-hold on;
-plot(log.time, log.debugval8, 'color', 'b');  %desPitch
-
-xlabel('Time (s)');
-ylabel({'Pitch Angle Estimate (rad) (red)', 'Desired Pitch Angle (rad) (blue)'});
-str = char([name(1:end-4) '_pitchest_pitchdes.jpg']);
-saveas(gcf, str);
-
-%% Generate est yaw angle desired yaw angle graph;
-figure;
-name = 'del4.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
-log = csv2struct(name, 29);
-hold off;
-plot(log.time, log.debugval2, 'color', 'r'); %estYaw
-hold on;
-des_yaw = zeros(length(log.debugval2), 1);
-plot(log.time, des_yaw, 'color', 'b');  %desRoll
-
-xlabel('Time (s)');
-ylabel({'Yaw Angle Estimate (rad) (red)', 'Desired Yaw Angle (rad) (blue)'});
-str = char([name(1:end-4) '_yawest_yawdes.jpg']);
-saveas(gcf, str);
-
+% %% Generate est vehicle velocities graph:
+% figure;
+% name = 'del4.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
+% log = csv2struct(name, 29);
+% 
+% hold off;
+% plot(log.time, log.rateGyro.x, 'color', 'r'); %rateGyro roll
+% hold on;
+% plot(log.time, log.rateGyro.y, 'color', 'g'); %rateGyro pitch 
+% hold on;
+% plot(log.time, log.rateGyro.z, 'color', 'b'); %rateGyro yaw 
+% 
+% title('Rate Gyro Roll, Pitch, Yaw  Measurements');
+% xlabel('Time (s)');
+% ylabel({'Roll (rad/s) (Red)', 'Pitch (rad/s) (Green)', 'Yaw (rad/s) (Blue)'});
+% 
+% str = char([name(1:end-4) '_rate_gyro_xyz_meas.jpg']);
+% saveas(gcf, str);
 
 
 

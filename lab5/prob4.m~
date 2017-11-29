@@ -25,7 +25,7 @@ p = 0.01;
 num_cycles = 5*(1/dt);
 
 t = 0;
-t_Vals = (1:num_cycles)'*2;
+t_Vals = (1:num_cycles)';
 
 while (t < num_cycles)
     % simulated sensors:
@@ -60,7 +60,7 @@ plot(t_Vals, Ang_Vals, 'color', 'r');
 hold on;
 plot(t_Vals, AngEst_Vals, 'color', 'b'); 
 
-xlabel('Time (ms)');
+xlabel('Time (cycles: 1/500 seconds)');
 ylabel({'Angle(rad) (red)', 'Angle Est(rad) (blue)'});
 str = 'ang_and_ang_est_graph.png';
 saveas(gcf, str);
@@ -78,7 +78,7 @@ saveas(gcf, str);
 figure;
 plot(t_Vals, AngAccCmd_Vals, 'color', 'b'); 
 
-xlabel('Time (ms)');
+xlabel('Time (cycles: 1/500 seconds)');
 ylabel({'Angle Acceleration Commanded(rad/s^2)'});
 str = 'ang_acc_cmd_graph.png';
 saveas(gcf, str);
