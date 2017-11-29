@@ -36,7 +36,6 @@ float p = 0.01f; //rho, the gyro/accel trade-off scalar default value: .01
 // controller variable initialization
 float loop_count = 0; // used for scaling up the desired height during take off
 float loop_count_roll = 0;
-float loop_back_thrust = 0;
 Vec3f cmdAngAcc = Vec3f(0,0,0);
 
 Vec3f desAngVel = Vec3f(0,0,0);
@@ -284,26 +283,14 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     // Vertical Controller
     // scale up the desired height value for a smooth takeoff
     if (loop_count < 5.0f) {
-      natFreq_height = 2.0f;
-      dampingRatio_height = 1.4f;
       desHeight = loop_count / 10.0f;
-      desAcc3 = -2 * dampingRatio_height * natFreq_height
-          * estVelocity_3
-          - natFreq_height * natFreq_height * (estHeight - desHeight);
-      //desAcc3 = desAcc3 * loop_count / 10.0f;
     }
     else {
-      natFreq_height = 2.0f;
-      dampingRatio_height = 0.7f;
       desHeight = 0.5f;
-      desAcc3 = -2 * dampingRatio_height * natFreq_height * estVelocity_3
-        - natFreq_height * natFreq_height * (estHeight - desHeight);
     }
+    desAcc3 = -2 * dampingRatio_height * natFreq_height * estVelocity_3
+      - natFreq_height * natFreq_height * (estHeight - desHeight);
     
-    //  desHeight = 0.5f;
-    //  desAcc3 = -2.0f * dampingRatio_height * natFreq_height
-    //    * estVelocity_3
-    //    - natFreq_height * natFreq_height * (estHeight - desHeight);
     
     //desired normalized total thrust:
     desNormalizedAcceleration = (gravity + desAcc3) / (cosf(estRoll) * cosf(estPitch));
@@ -377,7 +364,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
         estRoll = 0;
       }
       loop_count_roll += dt;
-      loop_back_thrust += dt;
     }
     else {
       outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
