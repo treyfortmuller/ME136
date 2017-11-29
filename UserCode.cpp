@@ -244,7 +244,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   // dont assume velocity is constant
   //estVelocity_1 = oldEstVelocity_1 + p*(in.imuMeasurement.accelerometer.x)*dt;
   //estVelocity_2 = oldEstVelocity_2 + p*(in.imuMeasurement.accelerometer.y)*dt;
-  estVel
 
   // Integrate optical flow for position estimation
   float desPos1 = 0;
@@ -388,10 +387,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[7] = desRollAng;
   outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
   outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
-  outVals.telemetryOutputs_plusMinus100[10] = estPos1;
-  outVals.telemetryOutputs_plusMinus100[11] = estPos2;
-  outVals.telemetryOutputs_plusMinus100[12] = desAcc3;
-  outVals.telemetryOutputs_plusMinus100[13] = loop_count;
+  outVals.telemetryOutputs_plusMinus100[10] = estPos_1;
+  outVals.telemetryOutputs_plusMinus100[11] = estPos_2;
+  //outVals.telemetryOutputs_plusMinus100[12] = desAcc3;
+  //outVals.telemetryOutputs_plusMinus100[13] = loop_count;
   return outVals;
 
 }
