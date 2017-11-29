@@ -21,7 +21,7 @@ const float gravity = 9.81f;  // acceleration of gravity [m/s^2]
 const float inertia_xx = 16e-6f;  //MMOI about x axis [kg.m^2]
 const float inertia_yy = inertia_xx;  //MMOI about y axis [kg.m^2]
 const float inertia_zz = 29e-6f;  //MMOI about z axis [kg.m^2]
-const float rad2deg = M_PI/180.0;
+const float deg2rad = M_PI/180.0;
 
 float tot_mot_force = 0;
 
@@ -36,6 +36,7 @@ float p = 0.01f; //rho, the gyro/accel trade-off scalar default value: .01
 // controller variable initialization
 float loop_count = 0; // used for scaling up the desired height during take off
 float loop_count_roll = 0;
+bool havent_flipped = 1;
 Vec3f cmdAngAcc = Vec3f(0,0,0);
 
 Vec3f desAngVel = Vec3f(0,0,0);
@@ -168,8 +169,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));
   
   if (time_blue) {
-    estRoll = (1.0f-p)*(estRoll + dt*AngVel.x);
-    estPitch = (1.0f-p)*(estPitch + dt*AngVel.y);
+    estRoll = (estRoll + dt*AngVel.x);
+    estPitch =(estPitch + dt*AngVel.y);
     estYaw = estYaw + dt*AngVel.z;
 
   }
@@ -339,19 +340,20 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
         outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3+(fact*cp3)));
         outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4+(fact*cp4)));
       }
-      else if (loop_count_roll > 1 and estRoll < (330*rad2deg)) {
+      else if (loop_count_roll > 1 and estRoll < (5.0f) and havent_flipped) {
         time_blue = 1; 
-        outVals.motorCommand1 = 240;
+        outVals.motorCommand1 = 90;
         outVals.motorCommand2 = 40;
         outVals.motorCommand3 = 40;
-        outVals.motorCommand4 = 240;
+        outVals.motorCommand4 = 90;
       }
-      else if (estRoll > (330*rad2deg) and estRoll < (360*rad2deg) and loop_count_roll > 1 ){
+      else if (estRoll > (5.0f) and estRoll < (6.28f) and loop_count_roll > 1 ){
         time_blue = 1; 
         outVals.motorCommand1 = 40;
-        outVals.motorCommand2 = 240;
-        outVals.motorCommand3 = 240;
-        outVals.motorCommand4 = 40;        
+        outVals.motorCommand2 = 90;
+        outVals.motorCommand3 = 90;
+        outVals.motorCommand4 = 40;
+        havent_flipped = 0;
         } 
       else {
         time_blue = 0;
@@ -360,7 +362,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
         outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
         outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
       }
-      if (estRoll >= (360*rad2deg)) {
+      if (estRoll >= (6.28f)) {
         estRoll = 0;
       }
       loop_count_roll += dt;
@@ -381,11 +383,11 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   }
 
   if (in.joystickInput.buttonYellow) {
-    if (desYawAng >= (360*rad2deg)) {
+    if (desYawAng >= (360*deg2rad)) {
       desYawAng = 0;
       estYaw = 0;
     } else {
-      desYawAng += (180*rad2deg)*dt;
+      desYawAng += (180*deg2rad)*dt;
     }
   }
 
