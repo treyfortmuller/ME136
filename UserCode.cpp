@@ -4,6 +4,7 @@
 
 #include <stdio.h> //for printf
 #include <math.h> //for trig functions
+#include <stdlib.h>
 
 //An example of a variable that persists beyond the function call.
 float exampleVariable_float = 0.0f;  //Note the trailing 'f' in the number. This is to force single precision floating point.
@@ -102,6 +103,9 @@ float oldEstVelocity_2 = 0;
 // integrating optical flow to control around 0 horizontal position
 float estPos_1 = 0;
 float estPos_2 = 0;
+float g1 = 0;
+float g2 = 0;
+const float g_lim = 5;
 
 // store last height measurement
 float lastHeightMeas_meas = 0;
@@ -251,7 +255,31 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
-
+  
+  // add integral action to horizontal velocity controller
+  g1 += (estPos_1 - desPos1)*dt;
+  g2 += (estPos_2 - desPos2)*dt;
+  if (g1 > g_lim){
+    g1 = g_lim;
+  }
+  if (g2 > g_lim){
+    g2 = g_lim;
+  }
+  if (g1 < -g_lim){
+    g1 = -g_lim;
+  }
+  if (g2 < -g_lim){
+    g2 = -g_lim;
+  }
+  if (abs(estPos_1) < 0.25){
+    g1 = 0;
+  }
+  if (abs(estPos_2) < 0.25){
+    g2 = 0;
+  }
+  desPos1 = -g1;
+  desPos2 = -g2;
+  
   // Horizontal Controller
   float desVel1 = -(1.0f / timeConst_horizPos_1) * (estPos_1 - desPos1);
   float desVel2 = -(1.0f / timeConst_horizPos_2) * (estPos_2 - desPos2);
@@ -396,10 +424,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[3] = estVelocity_1;
   outVals.telemetryOutputs_plusMinus100[4] = estVelocity_2;
   outVals.telemetryOutputs_plusMinus100[5] = estVelocity_3;
-  outVals.telemetryOutputs_plusMinus100[6] = desYawAng;
-  outVals.telemetryOutputs_plusMinus100[7] = estYaw;
-  outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
-  outVals.telemetryOutputs_plusMinus100[9] = desAcc3;
+  outVals.telemetryOutputs_plusMinus100[6] = estHeight;
+  outVals.telemetryOutputs_plusMinus100[7] = desRollAng;
+  outVals.telemetryOutputs_plusMinus100[8] = g1;
+  outVals.telemetryOutputs_plusMinus100[9] = g2;
   outVals.telemetryOutputs_plusMinus100[10] = estPos_1;
   outVals.telemetryOutputs_plusMinus100[11] = estPos_2;
   return outVals;
