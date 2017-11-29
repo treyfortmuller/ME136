@@ -15,7 +15,7 @@ MainLoopInput lastMainLoopInputs;
 MainLoopOutput lastMainLoopOutputs;
 
 //Some constants that we may use:
-const float mass = 30e-3f;  // mass of the quadcopter [kg]
+const float mass = 30.4e-3f;  // mass of the quadcopter [kg]
 const float gravity = 9.81f;  // acceleration of gravity [m/s^2]
 const float inertia_xx = 16e-6f;  //MMOI about x axis [kg.m^2]
 const float inertia_yy = inertia_xx;  //MMOI about y axis [kg.m^2]
@@ -77,7 +77,7 @@ float timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 //float timeConst_horizVel = 1.0f; //2.0
 //float timeConst_horizPos_1 = 2.0f;
 //float timeConst_horizPos_2 = 2.0f;
-const float h_vel = 1.0f;
+const float h_vel = 0.5f;
 const float h_pos1 = 2.0f;
 const float h_pos2 = 2.0f;
 float timeConst_horizVel = h_vel; //2.0
@@ -126,14 +126,14 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //gain scheduling
   if (loop_count < 3){
 //    // D gains on each axis
-//    timeConstant_rollRate = d_roll * 1 / (2 - loop_count/5); // [s]
-//    timeConstant_pitchRate = d_pitch * 1 / (2 - loop_count/5);
-//    timeConstant_yawRate = d_yaw * 1 / (2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+//    timeConstant_rollRate = d_roll * 1.0f / (2.0f - loop_count/5.0f); // [s]
+//    timeConstant_pitchRate = d_pitch * 1.0f / (2.0f - loop_count/5.0f);
+//    timeConstant_yawRate = d_yaw * 1.0f / (2.0f - loop_count/5.0f); // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
 //    // P gains on each axis
-//    timeConstant_rollAngle = p_roll*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-//    timeConstant_pitchAngle = p_pitch*1/(2 - loop_count/5);
-//    timeConstant_yawAngle = p_yaw*1/(2 - loop_count/5); // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+//    timeConstant_rollAngle = p_roll*1.0f / (2.0f - loop_count/5.0f); // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+//    timeConstant_pitchAngle = p_pitch*1.0f / (2.0f - loop_count/5.0f);
+//    timeConstant_yawAngle = p_yaw* 1.0f / (2.0f - loop_count/5.0f); // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
     // time constant for horizontal controller:
     timeConst_horizVel = h_vel*1.0f/(1.5f - loop_count/6.0f); //2.0
@@ -188,7 +188,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   float const mixHeight = 0.3f;
   if (in.heightSensor.updated) {
     // check that the measurement is reasonable
-    if (in.heightSensor.value < 5.0f) {
+    if (in.heightSensor.value < 2.0f) {
       float hMeas = in.heightSensor.value * cosf(estRoll) * cosf(estPitch);
       estHeight = (1 - mixHeight) * estHeight + mixHeight * hMeas;
 
@@ -227,8 +227,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
       float v1Meas = (-sigma_1 + in.imuMeasurement.rateGyro.y) * deltaPredict;
       float v2Meas = (-sigma_2 - in.imuMeasurement.rateGyro.x) * deltaPredict;
 
-      estVelocity_1 = (1 - mixHorizVel) * estVelocity_1 + mixHorizVel * v1Meas;
-      estVelocity_2 = (1 - mixHorizVel) * estVelocity_2 + mixHorizVel * v2Meas;
+      estVelocity_1 = (1.0f - mixHorizVel) * estVelocity_1 + mixHorizVel * v1Meas;
+      estVelocity_2 = (1.0f - mixHorizVel) * estVelocity_2 + mixHorizVel * v2Meas;
 
     }
 
@@ -250,11 +250,11 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
 
   // Horizontal Controller
-  float desVel1 = -(1 / timeConst_horizPos_1) * (estPos_1 - desPos1);
-  float desVel2 = -(1 / timeConst_horizPos_2) * (estPos_2 - desPos2);
+  float desVel1 = -(1.0f / timeConst_horizPos_1) * (estPos_1 - desPos1);
+  float desVel2 = -(1.0f / timeConst_horizPos_2) * (estPos_2 - desPos2);
 
-  float desAcc1 = -(1 / timeConst_horizVel) * (estVelocity_1 - desVel1);
-  float desAcc2 = -(1 / timeConst_horizVel) * (estVelocity_2 - desVel2);
+  float desAcc1 = -(1.0f / timeConst_horizVel) * (estVelocity_1 - desVel1);
+  float desAcc2 = -(1.0f / timeConst_horizVel) * (estVelocity_2 - desVel2);
 
   //control around velocity
   float desRollAng = -desAcc2/ gravity;
@@ -282,7 +282,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 //  }
 //
   desHeight = 0.5f;
-  desAcc3 = -2 * dampingRatio_height * natFreq_height
+  desAcc3 = -2.0f * dampingRatio_height * natFreq_height
     * estVelocity_3
     - natFreq_height * natFreq_height * (estHeight - desHeight);
 
@@ -295,18 +295,18 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   // ***Angle Controller***
   Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
 
-  cmdAngVel.x = (-1/timeConstant_rollAngle)*(estAngle.x - desRollAng);
-  cmdAngVel.y = (-1/timeConstant_pitchAngle)*(estAngle.y - desPitchAng);
-  cmdAngVel.z = (-1/timeConstant_yawAngle)*(estAngle.z - desYawAng);
+  cmdAngVel.x = (-1.0f/timeConstant_rollAngle)*(estAngle.x - desRollAng);
+  cmdAngVel.y = (-1.0f/timeConstant_pitchAngle)*(estAngle.y - desPitchAng);
+  cmdAngVel.z = (-1.0f/timeConstant_yawAngle)*(estAngle.z - desYawAng);
 
   desAngVel.x = cmdAngVel.x;
   desAngVel.y = cmdAngVel.y;
   desAngVel.z = cmdAngVel.z;
 
   // ***Rate Controller***
-  cmdAngAcc.x = (-1/timeConstant_rollRate)*(rateGyro_corr.x - desAngVel.x);
-  cmdAngAcc.y = (-1/timeConstant_pitchRate)*(rateGyro_corr.y - desAngVel.y);
-  cmdAngAcc.z = (-1/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
+  cmdAngAcc.x = (-1.0f/timeConstant_rollRate)*(rateGyro_corr.x - desAngVel.x);
+  cmdAngAcc.y = (-1.0f/timeConstant_pitchRate)*(rateGyro_corr.y - desAngVel.y);
+  cmdAngAcc.z = (-1.0f/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
 
   // desired torques:
   float n1 = cmdAngAcc.x*inertia_xx;
