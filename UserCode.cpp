@@ -23,6 +23,8 @@ const float inertia_yy = inertia_xx;  //MMOI about y axis [kg.m^2]
 const float inertia_zz = 29e-6f;  //MMOI about z axis [kg.m^2]
 const float rad2deg = M_PI/180.0;
 
+float tot_mot_force = 0;
+
 const float dt = 1.0f / 500.0f; //[s] period between successive calls to MainLoop
 Vec3f estGyroBias = Vec3f(0,0,0);
 Vec3f rateGyro_corr = Vec3f(0,0,0);
@@ -363,6 +365,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   float cp3 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((1.0f/l)*n2) + ((1.0f/k)*n3) );
   float cp4 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((1.0f/l)*n2) + ((-1.0f/k)*n3) );
 
+  tot_mot_force = cp1 + cp2 + cp3 + cp4;
 
   // run the controller
 
@@ -435,10 +438,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[5] = estVelocity_3;
   outVals.telemetryOutputs_plusMinus100[6] = estHeight;
   outVals.telemetryOutputs_plusMinus100[7] = desRollAng;
-  outVals.telemetryOutputs_plusMinus100[8] = g1;
-  outVals.telemetryOutputs_plusMinus100[9] = g2;
-  outVals.telemetryOutputs_plusMinus100[10] = estPos_1;
-  outVals.telemetryOutputs_plusMinus100[11] = estPos_2;
+  outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
+  outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
+  outVals.telemetryOutputs_plusMinus100[10] = desHeight;
+  outVals.telemetryOutputs_plusMinus100[11] = tot_mot_force;
   return outVals;
 
 }
