@@ -4,6 +4,7 @@
 
 #include <stdio.h> //for printf
 #include <math.h> //for trig functions
+#include <stdlib.h>
 
 //An example of a variable that persists beyond the function call.
 float exampleVariable_float = 0.0f;  //Note the trailing 'f' in the number. This is to force single precision floating point.
@@ -20,6 +21,7 @@ const float gravity = 9.81f;  // acceleration of gravity [m/s^2]
 const float inertia_xx = 16e-6f;  //MMOI about x axis [kg.m^2]
 const float inertia_yy = inertia_xx;  //MMOI about y axis [kg.m^2]
 const float inertia_zz = 29e-6f;  //MMOI about z axis [kg.m^2]
+const float rad2deg = M_PI/180.0;
 
 const float dt = 1.0f / 500.0f; //[s] period between successive calls to MainLoop
 Vec3f estGyroBias = Vec3f(0,0,0);
@@ -77,15 +79,14 @@ float timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 //float timeConst_horizVel = 1.0f; //2.0
 //float timeConst_horizPos_1 = 2.0f;
 //float timeConst_horizPos_2 = 2.0f;
-const float h_vel = 1.0f;
-const float h_pos1 = 2.0f;
-const float h_pos2 = 2.0f;
-float timeConst_horizVel = h_vel; //2.0
+const float h_vel = 1.0f; //1.0f
+const float h_pos1 = 5.0f; //2.0f
+const float h_pos2 = 5.0f; // 2.0f
+float timeConst_horizVel = h_vel;
 float timeConst_horizPos_1 = h_pos1;
 float timeConst_horizPos_2 = h_pos2;
-float g1 = 0;
-float g2 = 0;
-const float g_lim = 5;
+
+float desYawAng = 0;
 
 // time constants for the attitude control
 float natFreq_height = 2.0f;
@@ -99,11 +100,18 @@ float estVelocity_3 = 0;
 float oldEstVelocity_1 = 0;
 float oldEstVelocity_2 = 0;
 
-const float p_v = 1;
+const float p_v = 0; // update estimated translational velocity with acceleration mixing constant
 
 // integrating optical flow to control around 0 horizontal position
 float estPos_1 = 0;
 float estPos_2 = 0;
+
+float g1 = 0; // accumated position error for integral control on position
+float g2 = 0; // ""
+
+const float g_lim = 5; // windup prevention for position integral control
+
+const float k_g = 1.0f; // integral control gain
 
 // store last height measurement
 float lastHeightMeas_meas = 0;
@@ -211,8 +219,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // prediction
   // (just assume velocity is constant):
-//  estVelocity_1 = estVelocity_1 + 0 * dt;
-//  estVelocity_2 = estVelocity_2 + 0 * dt;
+  //estVelocity_1 = estVelocity_1 + 0 * dt;
+  //estVelocity_2 = estVelocity_2 + 0 * dt;
 
   // trying to use accelerometer to update translational velocities
   oldEstVelocity_1 = estVelocity_1;
@@ -239,8 +247,8 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   }
   // update translational velocity with estimated acceleration
-  estVelocity_1 = estVelocity_1 + (estVelocity_1 - oldEstVelocity_1) * p_v;
-  estVelocity_2 = estVelocity_2 + (estVelocity_2 - oldEstVelocity_2) * p_v;
+  //estVelocity_1 = estVelocity_1 + (estVelocity_1 - oldEstVelocity_1) * p_v;
+  //estVelocity_2 = estVelocity_2 + (estVelocity_2 - oldEstVelocity_2) * p_v;
 
   // Integrate optical flow for position estimation
   float desPos1 = 0;
@@ -253,9 +261,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
   
   // add integral action to horizontal position controller
-  g1 += (estPos_1 - desPos1)*dt;
-  g2 += (estPos_2 - desPos2)*dt;
+  g1 += k_g * (estPos_1 - desPos1) * dt;
+  g2 += k_g * (estPos_2 - desPos2) * dt;
 
+  // prevent integral windup
   if (g1 > g_lim){
     g1 = g_lim;
   }
@@ -268,7 +277,15 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   if (g2 < -g_lim){
     g2 = -g_lim;
   }
-  
+
+  // when we're close to 0, reset integral action
+  if (-0.1f < estPos_1 and  estPos_1 < 0.1f) {
+    g1 = 0;
+  }
+  if (-0.1f < estPos_2 and estPos_2 < 0.1f){
+    g2 = 0;
+  }
+
   desPos1 = -g1;
   desPos2 = -g2;
 
@@ -282,7 +299,6 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   //control around velocity
   float desRollAng = -desAcc2/ gravity;
   float desPitchAng = desAcc1/ gravity;
-  float desYawAng = 0;
 
   // trying to eliminate small angle approx
   //float desRollAng = - atanf(desAcc2/ gravity); // is this where the negative sign goes? how does it arise?
@@ -350,6 +366,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
 
   // run the controller
   if(in.joystickInput.buttonRed) {
+
     outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
     outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
     outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
@@ -363,6 +380,14 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
     outVals.motorCommand2 = 0;
     outVals.motorCommand3 = 0;
     outVals.motorCommand4 = 0;
+  }
+  if (in.joystickInput.buttonYellow) {
+    if (desYawAng >= (360*rad2deg)) {
+      desYawAng = 0;
+      estYaw = 0;
+    } else {
+      desYawAng += (180*rad2deg)*dt;
+    }
   }
 
   //  // 4.4.1:
@@ -384,12 +409,10 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   outVals.telemetryOutputs_plusMinus100[5] = estVelocity_3;
   outVals.telemetryOutputs_plusMinus100[6] = estHeight;
   outVals.telemetryOutputs_plusMinus100[7] = desRollAng;
-  outVals.telemetryOutputs_plusMinus100[8] = desPitchAng;
-  outVals.telemetryOutputs_plusMinus100[9] = desNormalizedAcceleration;
+  outVals.telemetryOutputs_plusMinus100[8] = g1;
+  outVals.telemetryOutputs_plusMinus100[9] = g2;
   outVals.telemetryOutputs_plusMinus100[10] = estPos_1;
   outVals.telemetryOutputs_plusMinus100[11] = estPos_2;
-  //outVals.telemetryOutputs_plusMinus100[12] = desAcc3;
-  //outVals.telemetryOutputs_plusMinus100[13] = loop_count;
   return outVals;
 
 }
@@ -483,6 +506,10 @@ void PrintStatus() {
          double(lastMainLoopInputs.opticalFlowSensor.value_x), \
          double(lastMainLoopInputs.opticalFlowSensor.value_y));
   printf("\n");
+
+  printf("des_yaw, est_yaw: %6.3f,  %6.3f\n", \
+         double(desYawAng), \
+         double(estYaw));
   //  End Code Block 5.1.1:
 
   //  printf("Example variable values:\n");
