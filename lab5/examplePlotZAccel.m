@@ -10,19 +10,19 @@
 close all;
 
 %% Deliverable 2:
-%% Generate pitch and roll estimate graph;
-figure;
-name = './smooth_log/log___2017_11_28___19_38_40_latest_good file.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
-log = csv2struct(name, 29);
-hold off;
-plot(log.time, log.debugval10, 'color', 'r'); %estPos1
-hold on;
-plot(log.time, log.debugval11, 'color', 'b');  %estPos2
-
-xlabel('Time (s)');
-ylabel({'Pos Estimate 1(m) (red)', 'Pos Estimate 2(m) (blue)'});
-str = char([name(1:end-4) '_pos_1_2_est.jpg']);
-saveas(gcf, str);
+% %% Generate pitch and roll estimate graph;
+% figure;
+% name = 'del2.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
+% log = csv2struct(name, 29);
+% hold off;
+% plot(log.time, log.debugval0, 'color', 'r'); %estRoll
+% hold on;
+% plot(log.time, log.debugval1, 'color', 'b');  %estPitch
+% 
+% xlabel('Time (s)');
+% ylabel({'Roll Estimate (rad) (red)', 'Pitch Estimate (rad) (blue)'});
+% str = char([name(1:end-4) '_roll_pitch_est.jpg']);
+% saveas(gcf, str);
 
 % %% Generate vertical velocity graph:
 % figure;
@@ -47,24 +47,24 @@ saveas(gcf, str);
 % 
 % 
 % %% Deliverable 3:
-% %% Generate rate gyro measurements graph:
-% figure;
-% name = 'del3.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
-% log = csv2struct(name, 29);
-% 
-% hold off;
-% plot(log.time, log.rateGyro.x, 'color', 'r'); %rateGyro roll
-% hold on;
-% plot(log.time, log.rateGyro.y, 'color', 'g'); %rateGyro pitch 
-% hold on;
-% plot(log.time, log.rateGyro.z, 'color', 'b'); %rateGyro yaw 
-% 
-% title('Rate Gyro Roll, Pitch, Yaw  Measurements');
-% xlabel('Time (s)');
-% ylabel({'Roll (Red)', 'Pitch (Green)', 'Yaw (Blue)'});
-% 
-% str = char([name(1:end-4) '_rate_gyro_xyz_meas.jpg']);
-% saveas(gcf, str);
+%% Generate rate gyro measurements graph:
+figure;
+name = 'del3.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
+log = csv2struct(name, 29);
+
+hold off;
+plot(log.time, log.rateGyro.x, 'color', 'r'); %rateGyro roll
+hold on;
+plot(log.time, log.rateGyro.y, 'color', 'g'); %rateGyro pitch 
+hold on;
+plot(log.time, log.rateGyro.z, 'color', 'b'); %rateGyro yaw 
+
+title('Rate Gyro Roll, Pitch, Yaw  Measurements');
+xlabel('Time (s)');
+ylabel({'Roll (rad/s) (Red)', 'Pitch (rad/s) (Green)', 'Yaw (rad/s) (Blue)'});
+
+str = char([name(1:end-4) '_rate_gyro_xyz_meas.jpg']);
+saveas(gcf, str);
 % 
 % %% Generate output from flow sensor (x, y) graph:
 % figure;
@@ -102,7 +102,19 @@ saveas(gcf, str);
 % str = char([name(1:end-4) '_heightEst.jpg']);
 % saveas(gcf, str);
 
-
+% %% Generate debug data graphs
+% figure;
+% name = './smooth_log/log___2017_11_28___19_38_40_latest_good file.csv'; %% NAME OF LOGFILE (CHANGE IF DIFFERENT)
+% log = csv2struct(name, 29);
+% hold off;
+% plot(log.time, log.debugval10, 'color', 'r'); %estPos1
+% hold on;
+% plot(log.time, log.debugval11, 'color', 'b');  %estPos2
+% 
+% xlabel('Time (s)');
+% ylabel({'Pos Estimate 1(m) (red)', 'Pos Estimate 2(m) (blue)'});
+% str = char([name(1:end-4) '_pos_1_2_est.jpg']);
+% saveas(gcf, str);
 
 
 % example plotting data using csv2struct() function
