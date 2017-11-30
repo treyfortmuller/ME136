@@ -36,7 +36,6 @@ float p = 0.01f; //rho, the gyro/accel trade-off scalar default value: .01
 // controller variable initialization
 float loop_count = 0; // used for scaling up the desired height during take off
 float loop_count_roll = 0;
-bool havent_flipped = 1;
 Vec3f cmdAngAcc = Vec3f(0,0,0);
 
 Vec3f desAngVel = Vec3f(0,0,0);
@@ -55,42 +54,41 @@ float k = 0.01f;
 
 // time constant for controllers on each axis
 // D gains on each axis
-float timeConstant_rollRate = 0.04f; // [s]
-float timeConstant_pitchRate = 0.04f;
-float timeConstant_yawRate = 0.1f; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
+const float d_roll = 0.04f;
+const float d_pitch = 0.04f;
+const float d_yaw = 0.1f;
+float timeConstant_rollRate = d_roll; // [s]
+float timeConstant_pitchRate = d_pitch;
+float timeConstant_yawRate = d_yaw; // [s] (CHANGED! 5.1.2, 0.5f->0.1f)
 
 
 // P gains on each axis
-float timeConstant_rollAngle = 0.16f; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
-float timeConstant_pitchAngle = 0.16f;
-float timeConstant_yawAngle = 0.2f; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
+const float p_roll = 0.16f; // from 0.12
+const float p_pitch = 0.16f; // from 0.12
+const float p_yaw = 0.2f; // from 0.2
+float timeConstant_rollAngle = p_roll; // [s] (CHANGED! 5.1.2, 0.4f->0.12f)
+float timeConstant_pitchAngle = p_pitch;
+float timeConstant_yawAngle = p_yaw; // [s] (CHANGED! 5.1.2, 1.0f->0.2f)
 
     
 // time constant for horizontal controller:
 const float h_vel = 1.0f; //1.0f
-
-const float h_pos1 = 5.0f; //2.0f
-const float h_pos2 = 5.0f; // 2.0f
-
+const float h_pos1 = 5.0f; //5.0  //2.0f
+const float h_pos2 = 5.0f; //5.0 // 2.0f
 float timeConst_horizVel = h_vel;
 float timeConst_horizPos_1 = h_pos1;
 float timeConst_horizPos_2 = h_pos2;
 
 float desYawAng = 0;
-float desRollAng = 0;
-float desPitchAng = 0;
 
 // time constants for the attitude control
-float natFreq_height = 2.0f; //2.0f
+float natFreq_height = 2.0f;
 float dampingRatio_height = 0.7f; //0.7 before
 
 float estHeight = 0;
-float des_total_force = 0;
 float estVelocity_1 = 0;
 float estVelocity_2 = 0;
 float estVelocity_3 = 0;
-
-float desNormalizedAcceleration = 0;
 
 float oldEstVelocity_1 = 0;
 float oldEstVelocity_2 = 0;
@@ -108,18 +106,13 @@ const float g_lim = 5; // windup prevention for position integral control
 
 const float k_g = 1.0f; // integral control gain
 
-bool time_blue = 0;
-float cp1 = 0;
-float cp2 = 0;
-float cp3 = 0;
-float cp4 = 0;
-
 // store last height measurement
 float lastHeightMeas_meas = 0;
 float lastHeightMeas_time = 0;
 
 //initialize angular velocity variable
 Vec3f AngVel = Vec3f(0,0,0);
+
 
 ////lab 5 code
 MainLoopOutput MainLoop(MainLoopInput const &in) {
@@ -138,192 +131,193 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
   
   //gain scheduling
   if (loop_count < 3){
-
     // time constant for horizontal controller:
     timeConst_horizVel = h_vel*1.0f/(1.5f - loop_count/6.0f); //2.0
     timeConst_horizPos_1 = h_pos1*1.0f/(1.5f - loop_count/6.0f);
     timeConst_horizPos_2 = h_pos2*1.0f/(1.5f - loop_count/6.0f);
   }
   else{
-
     // time constant for horizontal controller:
     timeConst_horizVel = h_vel; //2.0
     timeConst_horizPos_1 = h_pos1;
     timeConst_horizPos_2 = h_pos2;
   }
 
+  //  ***Gyro only attitude estimator***
+  //estRoll = estRoll + dt*rateGyro_corr.x;
+  //estPitch = estPitch + dt*rateGyro_corr.y;
+  //estYaw = estYaw + dt*rateGyro_corr.z;
+
+  // ***Gyro + accelerometer attitude estimator***
+  // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
+  //estRoll = (1.0f-p)*(estRoll + dt*rateGyro_corr.x) + p*(in.imuMeasurement.accelerometer.y / gravity);
+  //estPitch = (1.0f-p)*(estPitch + dt*rateGyro_corr.y) + p*(in.imuMeasurement.accelerometer.x / -gravity);
+  //estYaw = estYaw + dt*rateGyro_corr.z;
 
   // ***Gyro + accelerometer attitude estimator + no small angle aprroximations***
   AngVel.x = rateGyro_corr.x + rateGyro_corr.y*(sinf(estRoll)*tanf(estPitch)) + rateGyro_corr.z*(cosf(estRoll)*tanf(estPitch));
   AngVel.y = rateGyro_corr.y*cosf(estRoll) - rateGyro_corr.z*sinf(estRoll);
   AngVel.z = rateGyro_corr.y*((sinf(estRoll))/(cosf(estPitch))) + rateGyro_corr.z*((cosf(estRoll))/(cosf(estPitch)));
-  
-  if (time_blue) {
-    estRoll = (estRoll + dt*AngVel.x);
-    estPitch =(estPitch + dt*AngVel.y);
-    estYaw = estYaw + dt*AngVel.z;
 
+  // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
+  estRoll = (1.0f-p)*(estRoll + dt*AngVel.x) + p*(asinf( in.imuMeasurement.accelerometer.y / (gravity*cosf(estPitch))));
+  estPitch = (1.0f-p)*(estPitch + dt*AngVel.y) + p*(asinf( in.imuMeasurement.accelerometer.x / -gravity));
+  estYaw = estYaw + dt*AngVel.z;
+
+  // height estimator:
+  // prediction step:
+  estHeight = estHeight + estVelocity_3 * dt;
+  estVelocity_3 = estVelocity_3 + 0 * dt; //assume constant(!)
+
+  // correction step, directly after the prediction step:
+  float const mixHeight = 0.3f;
+  if (in.heightSensor.updated) {
+    // check that the measurement is reasonable
+    if (in.heightSensor.value < 2.0f) {
+      float hMeas = in.heightSensor.value * cosf(estRoll) * cosf(estPitch);
+      estHeight = (1 - mixHeight) * estHeight + mixHeight * hMeas;
+
+      float v3Meas = (hMeas - lastHeightMeas_meas)
+          / (in.currentTime - lastHeightMeas_time);
+
+      estVelocity_3 = (1- mixHeight) * estVelocity_3 + mixHeight * v3Meas;
+      // store this measurement for the next velocity update
+      lastHeightMeas_meas = hMeas;
+      lastHeightMeas_time = in.currentTime;
+    }
   }
-  else{
-    // be aware of accelerometer and gyro measurements on different axis can reflect the same motion
-    estRoll = (1.0f-p)*(estRoll + dt*AngVel.x) + p*(asinf( in.imuMeasurement.accelerometer.y / (gravity*cosf(estPitch))));
-    estPitch = (1.0f-p)*(estPitch + dt*AngVel.y) + p*(asinf( in.imuMeasurement.accelerometer.x / -gravity));
-    estYaw = estYaw + dt*AngVel.z;
-    
-    // height estimator:
-    // prediction step:
-    estHeight = estHeight + estVelocity_3 * dt;
-    estVelocity_3 = estVelocity_3 + 0 * dt; //assume constant(!)
-    
-    // correction step, directly after the prediction step:
-    float const mixHeight = 0.3f;
-    if (in.heightSensor.updated) {
-      // check that the measurement is reasonable
-      if (in.heightSensor.value < 2.0f) {
-        float hMeas = in.heightSensor.value * cosf(estRoll) * cosf(estPitch);
-        estHeight = (1 - mixHeight) * estHeight + mixHeight * hMeas;
-    
-        float v3Meas = (hMeas - lastHeightMeas_meas)
-            / (in.currentTime - lastHeightMeas_time);
-    
-        estVelocity_3 = (1- mixHeight) * estVelocity_3 + mixHeight * v3Meas;
-        // store this measurement for the next velocity update
-        lastHeightMeas_meas = hMeas;
-        lastHeightMeas_time = in.currentTime;
-      }
+
+  // horizontal state estimate:
+
+  // prediction
+  // (just assume velocity is constant):
+  //estVelocity_1 = estVelocity_1 + 0 * dt;
+  //estVelocity_2 = estVelocity_2 + 0 * dt;
+
+  // trying to use accelerometer to update translational velocities
+  oldEstVelocity_1 = estVelocity_1;
+  oldEstVelocity_2 = estVelocity_2;
+
+  // correction step, directly after the prediction step:
+  float const mixHorizVel = 0.5f; //.1
+  if (in.opticalFlowSensor.updated) {
+    float sigma_1 = -in.opticalFlowSensor.value_x;
+    float sigma_2 = -in.opticalFlowSensor.value_y;
+
+    float div = (cosf(estRoll) * cosf(estPitch));
+
+    if (div > 0.5f) {
+      float deltaPredict = estHeight / div; //this is the delta in the eqution
+
+      float v1Meas = (-sigma_1 + in.imuMeasurement.rateGyro.y) * deltaPredict;
+      float v2Meas = (-sigma_2 - in.imuMeasurement.rateGyro.x) * deltaPredict;
+
+      estVelocity_1 = (1.0f - mixHorizVel) * estVelocity_1 + mixHorizVel * v1Meas;
+      estVelocity_2 = (1.0f - mixHorizVel) * estVelocity_2 + mixHorizVel * v2Meas;
     }
-    
-    // horizontal state estimate:
-    oldEstVelocity_1 = estVelocity_1;
-    oldEstVelocity_2 = estVelocity_2;
-    
-    // correction step, directly after the prediction step:
-    float const mixHorizVel = 0.5f; //.1
-    if (in.opticalFlowSensor.updated) {
-      float sigma_1 = -in.opticalFlowSensor.value_x;
-      float sigma_2 = -in.opticalFlowSensor.value_y;
-    
-      float div = (cosf(estRoll) * cosf(estPitch));
-    
-      if (div > 0.5f) {
-        float deltaPredict = estHeight / div; //this is the delta in the eqution
-    
-        float v1Meas = (-sigma_1 + in.imuMeasurement.rateGyro.y) * deltaPredict;
-        float v2Meas = (-sigma_2 - in.imuMeasurement.rateGyro.x) * deltaPredict;
-    
-        estVelocity_1 = (1.0f - mixHorizVel) * estVelocity_1 + mixHorizVel * v1Meas;
-        estVelocity_2 = (1.0f - mixHorizVel) * estVelocity_2 + mixHorizVel * v2Meas;
-    
-      }
-    
-    }
-    // update translational velocity with estimated acceleration
-    //estVelocity_1 = estVelocity_1 + (estVelocity_1 - oldEstVelocity_1) * p_v;
-    //estVelocity_2 = estVelocity_2 + (estVelocity_2 - oldEstVelocity_2) * p_v;
-    
-    // Integrate optical flow for position estimation
-    float desPos1 = 0;
-    float desPos2 = 0;
-    
-    float oldEstPos_1 = estPos_1;
-    float oldEstPos_2 = estPos_2;
-    
-    estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
-    estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
-    
-    // add integral action to horizontal position controller
-    g1 += k_g * (estPos_1 - desPos1) * dt;
-    g2 += k_g * (estPos_2 - desPos2) * dt;
-    
-    // prevent integral windup
-    if (g1 > g_lim){
-      g1 = g_lim;
-    }
-    if (g2 > g_lim){
-      g2 = g_lim;
-    }
-    if (g1 < -g_lim){
-      g1 = -g_lim;
-    }
-    if (g2 < -g_lim){
-      g2 = -g_lim;
-    }
-    
-    // when we're close to 0, reset integral action
-    if (-0.1f < estPos_1 and  estPos_1 < 0.1f) {
-      g1 = g1*0.95f;
-    }
-    if (-0.1f < estPos_2 and estPos_2 < 0.1f){
-      g2 = g2*0.95f;
-    }
-    
-    desPos1 = -g1;
-    desPos2 = -g2;
-    
-    // Horizontal Controller
-    float desVel1 = -(1.0f / timeConst_horizPos_1) * (estPos_1 - desPos1);
-    float desVel2 = -(1.0f / timeConst_horizPos_2) * (estPos_2 - desPos2);
-    
-    float desAcc1 = -(1.0f / timeConst_horizVel) * (estVelocity_1 - desVel1);
-    float desAcc2 = -(1.0f / timeConst_horizVel) * (estVelocity_2 - desVel2);
-    
-    //control around velocity
-    desRollAng = -desAcc2/ gravity;
-    desPitchAng = desAcc1/ gravity;
-    
-    // Vertical Controller
-    // scale up the desired height value for a smooth takeoff
-    if (loop_count < 5.0f) {
-      desHeight = loop_count / 10.0f;
-    }
-    else {
-      desHeight = 0.5f;
-    }
+  }
+
+  // Integrate optical flow for position estimation
+  float desPos1 = 0;
+  float desPos2 = 0;
+
+  float oldEstPos_1 = estPos_1;
+  float oldEstPos_2 = estPos_2;
+
+  estPos_1 = oldEstPos_1 + (dt * estVelocity_1);
+  estPos_2 = oldEstPos_2 + (dt * estVelocity_2);
+  
+  // add integral action to horizontal position controller
+  g1 += k_g * (estPos_1 - desPos1) * dt;
+  g2 += k_g * (estPos_2 - desPos2) * dt;
+
+  // prevent integral windup
+  if (g1 > g_lim){
+    g1 = g_lim;
+  }
+  if (g2 > g_lim){
+    g2 = g_lim;
+  }
+  if (g1 < -g_lim){
+    g1 = -g_lim;
+  }
+  if (g2 < -g_lim){
+    g2 = -g_lim;
+  }
+
+  // when we're close to 0, reset integral action
+  if (-0.1f < estPos_1 and  estPos_1 < 0.1f) {
+    g1 = 0;
+  }
+  if (-0.1f < estPos_2 and estPos_2 < 0.1f){
+    g2 = 0;
+  }
+
+  desPos1 = -g1;
+  desPos2 = -g2;
+
+  // Horizontal Controller
+  float desVel1 = -(1.0f / timeConst_horizPos_1) * (estPos_1 - desPos1);
+  float desVel2 = -(1.0f / timeConst_horizPos_2) * (estPos_2 - desPos2);
+
+  float desAcc1 = -(1.0f / timeConst_horizVel) * (estVelocity_1 - desVel1);
+  float desAcc2 = -(1.0f / timeConst_horizVel) * (estVelocity_2 - desVel2);
+
+  //control around velocity
+  float desRollAng = -desAcc2/ gravity;
+  float desPitchAng = desAcc1/ gravity;
+
+  // Vertical Controller
+  // scale up the desired height value for a smooth takeoff
+  if (loop_count < 5.0f) {
+    dampingRatio_height = 1.4f;
+    desHeight = loop_count / 10.0f;
+  }
+  else {
+    dampingRatio_height = 0.7f;
+    desHeight = 0.5f;
+  }
     desAcc3 = -2 * dampingRatio_height * natFreq_height * estVelocity_3
       - natFreq_height * natFreq_height * (estHeight - desHeight);
-    
-    
-    //desired normalized total thrust:
-    desNormalizedAcceleration = (gravity + desAcc3) / (cosf(estRoll) * cosf(estPitch));
-    
-    // desired force
-    des_total_force = mass * desNormalizedAcceleration;
 
-    // ***Angle Controller***
-    Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
-    
-    cmdAngVel.x = (-1.0f/timeConstant_rollAngle)*(estAngle.x - desRollAng);
-    cmdAngVel.y = (-1.0f/timeConstant_pitchAngle)*(estAngle.y - desPitchAng);
-    cmdAngVel.z = (-1.0f/timeConstant_yawAngle)*(estAngle.z - desYawAng);
-    
-    desAngVel.x = cmdAngVel.x;
-    desAngVel.y = cmdAngVel.y;
-    desAngVel.z = cmdAngVel.z;
-    
-    // ***Rate Controller***
-    cmdAngAcc.x = (-1.0f/timeConstant_rollRate)*(rateGyro_corr.x - desAngVel.x);
-    cmdAngAcc.y = (-1.0f/timeConstant_pitchRate)*(rateGyro_corr.y - desAngVel.y);
-    cmdAngAcc.z = (-1.0f/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
-    
-    // desired torques:
-    float n1 = cmdAngAcc.x*inertia_xx;
-    float n2 = cmdAngAcc.y*inertia_yy;
-    float n3 = cmdAngAcc.z*inertia_zz;
-      
-    // MIXER
-    // convert desired torque + total force to four motor forces
-    cp1 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((-1.0f/l)*n2) + ((1.0f/k)*n3) );
-    cp2 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((-1.0f/l)*n2) + ((-1.0f/k)*n3) );
-    cp3 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((1.0f/l)*n2) + ((1.0f/k)*n3) );
-    cp4 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((1.0f/l)*n2) + ((-1.0f/k)*n3) );
-  
-    tot_mot_force = cp1 + cp2 + cp3 + cp4;
-  }
+  //desired normalized total thrust:
+  float desNormalizedAcceleration = (gravity + desAcc3) / (cosf(estRoll) * cosf(estPitch));
+
+  // desired force
+  float des_total_force = mass * desNormalizedAcceleration;
+
+  // ***Angle Controller***
+  Vec3f estAngle = Vec3f(estRoll, estPitch, estYaw);
+
+  cmdAngVel.x = (-1.0f/timeConstant_rollAngle)*(estAngle.x - desRollAng);
+  cmdAngVel.y = (-1.0f/timeConstant_pitchAngle)*(estAngle.y - desPitchAng);
+  cmdAngVel.z = (-1.0f/timeConstant_yawAngle)*(estAngle.z - desYawAng);
+
+  desAngVel.x = cmdAngVel.x;
+  desAngVel.y = cmdAngVel.y;
+  desAngVel.z = cmdAngVel.z;
+
+  // ***Rate Controller***
+  cmdAngAcc.x = (-1.0f/timeConstant_rollRate)*(rateGyro_corr.x - desAngVel.x);
+  cmdAngAcc.y = (-1.0f/timeConstant_pitchRate)*(rateGyro_corr.y - desAngVel.y);
+  cmdAngAcc.z = (-1.0f/timeConstant_yawRate)*(rateGyro_corr.z - desAngVel.z);
+
+  // desired torques:
+  float n1 = cmdAngAcc.x*inertia_xx;
+  float n2 = cmdAngAcc.y*inertia_yy;
+  float n3 = cmdAngAcc.z*inertia_zz;
+
+  // MIXER
+  // convert desired torque + total force to four motor forces
+  float cp1 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((-1.0f/l)*n2) + ((1.0f/k)*n3) );
+  float cp2 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((-1.0f/l)*n2) + ((-1.0f/k)*n3) );
+  float cp3 = (0.25f)*( (1.0f*des_total_force) + ((-1.0f/l)*n1) + ((1.0f/l)*n2) + ((1.0f/k)*n3) );
+  float cp4 = (0.25f)*( (1.0f*des_total_force) + ((1.0f/l)*n1) + ((1.0f/l)*n2) + ((-1.0f/k)*n3) );
+
+  tot_mot_force = cp1 + cp2 + cp3 + cp4;
 
   // run the controller
-  if (estRoll >= (6.28f)) {
-          estRoll = 0;
-  }
+
   if(in.joystickInput.buttonRed) {
     if (in.joystickInput.buttonBlue) {
       if (loop_count_roll < 1) {
@@ -333,35 +327,21 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
         outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3+(fact*cp3)));
         outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4+(fact*cp4)));
       }
-      else if (loop_count_roll > 1 and estRoll < (3.5f) and havent_flipped) {
-        time_blue = 1; 
-        outVals.motorCommand1 = 160;
-        outVals.motorCommand2 = 40;
-        outVals.motorCommand3 = 40;
-        outVals.motorCommand4 = 160;
-      }
-      else if (estRoll > (3.5f) and estRoll < (6.28f) and loop_count_roll > 1 ){
-        time_blue = 1; 
-        outVals.motorCommand1 = 40;
-        outVals.motorCommand2 = 160;
-        outVals.motorCommand3 = 160;
-        outVals.motorCommand4 = 40;
-        havent_flipped = 0;
-        } 
-      else if (estRoll < 0.5f and estRoll > -0.5f and loop_count_roll < 2.0f){
-        time_blue = 0;
-        outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1*2));
-        outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2*2));
-        outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3*2));
-        outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4*2));
-      }
-      else {
+      else if (loop_count_roll > 1 and estRoll < (360*deg2rad)) {
+          int quat_thr = 255.0;
+          outVals.motorCommand1 = quat_thr;
+          outVals.motorCommand2 = 0;
+          outVals.motorCommand3 = 0;
+          outVals.motorCommand4 = quat_thr;
+      } else {
         outVals.motorCommand1 = pwmCommandFromSpeed(speedFromForce(cp1));
         outVals.motorCommand2 = pwmCommandFromSpeed(speedFromForce(cp2));
         outVals.motorCommand3 = pwmCommandFromSpeed(speedFromForce(cp3));
         outVals.motorCommand4 = pwmCommandFromSpeed(speedFromForce(cp4));
       }
-
+      if (estRoll >= (360*deg2rad)) {
+        estRoll = 0;
+      }
       loop_count_roll += dt;
     }
     else {
@@ -387,6 +367,7 @@ MainLoopOutput MainLoop(MainLoopInput const &in) {
       desYawAng += (180*deg2rad)*dt;
     }
   }
+
 
   //copy the inputs and outputs:
   lastMainLoopInputs = in;
@@ -465,7 +446,7 @@ void PrintStatus() {
   printf("des_yaw, est_yaw: %6.3f,  %6.3f\n", \
          double(desYawAng), \
          double(estYaw));
-  //  End Code Block 5.1.1:
+
 
   //just an example of how we would inspect the last main loop inputs and outputs:
   printf("Last main loop inputs:\n");
