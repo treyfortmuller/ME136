@@ -1,5 +1,7 @@
 /* Quadcopter app, modified from lab code for ME136
  *
+ * originally in the ME136 firmware in /firmware/src/modules/quad/main.cpp
+ *
  * (c) 2017 Muellerlab, UC Berkeley.
  */
 
